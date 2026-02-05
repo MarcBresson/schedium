@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyscheduler"
+dynamic = ["version"]
+requires-python = ">=3.10"
+maintainers = [
+  {name = "Marc Bresson", email = "m.bresson@mailo.eu"},
+]
+description = "Automatically trigger jobs at specific times"
+readme = "README.md"
+keywords = ["scheduling"]
+classifiers=[
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development",
+  "Topic :: Scientific/Engineering",
+  "Typing :: Typed",
+]
+
+[project.urls]
+Repository = "https://github.com/MarcBresson"
+Issues = "https://github.com/MarcBresson"
+Changelog = "https://github.com/MarcBresson"
+
+[dependency-groups]
+dev = [
+    "mypy",
+    "pre-commit",
+    "ipykernel",
+    "ipython",
+]
+test = [
+  "pytest",
+  "pytest-cov",
+  "pytest-mock",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "pyscheduler.__version__"}
