@@ -16,9 +16,13 @@ copyright = f"{date.today().year}, {author}"
 
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
+    "sphinx.ext.linkcode",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.doctest",
+    "numpydoc",
+    "sphinx_copybutton",
 ]
 
 autosummary_generate = True
@@ -33,6 +37,7 @@ napoleon_numpy_docstring = True
 html_theme = os.environ.get("SPHINX_HTML_THEME", "furo")
 html_static_path = ["_static"]
 html_logo = "logo.svg"
+html_favicon = "favicon.svg"
 
 # Make the API output a bit cleaner.
 autodoc_member_order = "bysource"
