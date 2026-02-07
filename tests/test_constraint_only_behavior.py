@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from pyscheduler import Job, On, Scheduler
+from schedium import Job, On, Scheduler
 
 
 def test_constraint_only_trigger_fires_once_per_day_when_first_seen():
