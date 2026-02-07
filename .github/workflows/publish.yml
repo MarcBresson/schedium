@@ -1,0 +1,94 @@
+name: Publish (PyPI)
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "Target repository"
+        required: true
+        type: choice
+        default: pypi
+        options:
+          - pypi
+          - testpypi
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build dists
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Build
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+          python -m build
+
+      - name: Check dists
+        run: |
+          python -m pip install --upgrade twine
+          python -m twine check dist/*
+
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: Publish
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment:
+      name: ${{ inputs.repository || 'pypi' }}
+      url: ${{ (inputs.repository || 'pypi') == 'testpypi' && 'https://test.pypi.org/project/schedium/' || 'https://pypi.org/project/schedium/' }}
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to TestPyPI (token)
+        if: ${{ (inputs.repository || 'pypi') == 'testpypi' && secrets.TEST_PYPI_API_TOKEN != '' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+
+      - name: Publish to TestPyPI (trusted publishing)
+        if: ${{ (inputs.repository || 'pypi') == 'testpypi' && secrets.TEST_PYPI_API_TOKEN == '' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+      - name: Publish to PyPI (token)
+        if: ${{ (inputs.repository || 'pypi') == 'pypi' && secrets.PYPI_API_TOKEN != '' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Publish to PyPI (trusted publishing)
+        if: ${{ (inputs.repository || 'pypi') == 'pypi' && secrets.PYPI_API_TOKEN == '' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
