@@ -3,9 +3,9 @@ from __future__ import annotations
 from contextlib import suppress
 from datetime import datetime
 
-from pyscheduler.exceptions import NotATickingTrigger
-from pyscheduler.job import Job
-from pyscheduler.triggers import (
+from schedium.exceptions import NotATickingTrigger
+from schedium.job import Job
+from schedium.triggers import (
     AtDateTimeTrigger,
     BaseCombinatorTrigger,
     BaseTrigger,
@@ -14,7 +14,7 @@ from pyscheduler.triggers import (
 
 
 def _has_tick_source(trigger: BaseTrigger) -> bool:
-    from pyscheduler.triggers.sugar.tick import Tick
+    from schedium.triggers.sugar.tick import Tick
 
     if isinstance(trigger, (Every, Tick, AtDateTimeTrigger)):
         return True
@@ -42,7 +42,7 @@ class Scheduler:
     Run something every 5 minutes
 
     >>> from datetime import datetime
-    >>> from pyscheduler import DidNotRun, Every, Job, Scheduler
+    >>> from schedium import DidNotRun, Every, Job, Scheduler
     >>> sched = Scheduler()
     >>> def tick():
     ...     print("tick")
@@ -63,7 +63,7 @@ class Scheduler:
 
     Combine triggers (weekday at 08:00)
 
-    >>> from pyscheduler import On
+    >>> from schedium import On
     >>> weekday_8am = (
     ...     Every(unit="day", interval=1)
     ...     & On(unit="weekdays", value=1)
@@ -96,7 +96,7 @@ class Scheduler:
         self.jobs: list[Job] = []
 
     def append(self, job: Job):
-        """Append an already-constructed :class:`~pyscheduler.job.Job`."""
+        """Append an already-constructed :class:`~schedium.job.Job`."""
         if not _has_tick_source(job.trigger):
             raise ValueError(
                 "Trigger is not schedulable without a tick source. "

@@ -3,7 +3,7 @@ requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pyscheduler"
+name = "schedium"
 dynamic = ["version"]
 requires-python = ">=3.10"
 maintainers = [
@@ -34,6 +34,12 @@ Repository = "https://github.com/MarcBresson"
 Issues = "https://github.com/MarcBresson"
 Changelog = "https://github.com/MarcBresson"
 
+[project.optional-dependencies]
+docs = [
+  "sphinx>=7",
+  "furo>=2024.0.0",
+]
+
 [dependency-groups]
 dev = [
     "mypy",
@@ -52,7 +58,7 @@ test = [
 ]
 
 [tool.setuptools.dynamic]
-version = {attr = "pyscheduler.__version__"}
+version = {attr = "schedium.__version__"}
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

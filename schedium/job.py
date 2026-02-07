@@ -1,16 +1,16 @@
 """Job definition.
 
-A :class:`~pyscheduler.job.Job` couples:
+A :class:`~schedium.job.Job` couples:
 
 - a *callable* (your work), and
 - a *trigger* (when to run).
 
 Jobs are intentionally small and stateful: each job tracks the last trigger
 event it ran for so it can deduplicate repeated calls to
-:meth:`pyscheduler.scheduler.Scheduler.run_pending`.
+:meth:`schedium.scheduler.Scheduler.run_pending`.
 
 Most users will construct jobs directly and register them via
-:meth:`pyscheduler.scheduler.Scheduler.append`.
+:meth:`schedium.scheduler.Scheduler.append`.
 """
 
 from __future__ import annotations
@@ -18,9 +18,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import datetime
 
-from pyscheduler.triggers import BaseTrigger
-from pyscheduler.triggers.base import TriggerEvent
-from pyscheduler.utils.evaluate import evaluate
+from schedium.triggers import BaseTrigger
+from schedium.triggers.base import TriggerEvent
+from schedium.utils.evaluate import evaluate
 
 
 class Job:
@@ -30,7 +30,7 @@ class Job:
     ----------
     func:
         A zero-argument callable. The return value is returned by
-        :meth:`run` and by :meth:`pyscheduler.scheduler.Scheduler.run_pending`.
+        :meth:`run` and by :meth:`schedium.scheduler.Scheduler.run_pending`.
         If you need to pass arguments, wrap them in a closure or `functools.partial`.
     trigger:
         The trigger that decides when this job is due.
@@ -42,8 +42,8 @@ class Job:
     Deduplication
         A job runs at most once per trigger *event token*.
 
-        Internally, :func:`pyscheduler.utils.evaluate.evaluate` turns a trigger
-        match into a :class:`pyscheduler.triggers.base.TriggerEvent`. The
+        Internally, :func:`schedium.utils.evaluate.evaluate` turns a trigger
+        match into a :class:`schedium.triggers.base.TriggerEvent`. The
         event's token typically represents a *time bucket* (minute/hour/day, etc.).
         If the scheduler is called multiple times within the same bucket, the
         job is considered not due after the first run.

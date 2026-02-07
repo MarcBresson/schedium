@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from datetime import time
 
-from pyscheduler.schemas.granularity import Granularity
-from pyscheduler.triggers.base import BaseTrigger
-from pyscheduler.triggers.on import On
-from pyscheduler.triggers.sugar.tick import Tick
+from schedium.schemas.granularity import Granularity
+from schedium.triggers.base import BaseTrigger
+from schedium.triggers.on import On
+from schedium.triggers.sugar.tick import Tick
 
 _WEEKDAY_ALIASES_TO_ISO = {
     "mon": 1,

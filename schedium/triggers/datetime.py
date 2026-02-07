@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
-from pyscheduler.triggers.base import BaseTrigger, Granularity
+from schedium.triggers.base import BaseTrigger, Granularity
 
 
 @dataclass(frozen=True)

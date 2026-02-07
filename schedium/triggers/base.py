@@ -4,9 +4,9 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from pyscheduler.exceptions import NextRunMaxIterationsReached
-from pyscheduler.schemas.granularity import Granularity
-from pyscheduler.utils.truncate_to_granularity import truncate
+from schedium.exceptions import NextRunMaxIterationsReached
+from schedium.schemas.granularity import Granularity
+from schedium.utils.truncate_to_granularity import truncate
 
 
 def _add_months(dt: datetime, months: int) -> datetime:
@@ -102,7 +102,7 @@ class BaseTrigger:
         if candidate < after:
             candidate = _increment(candidate, granularity)
 
-        from pyscheduler.exceptions import NextRunMaxIterationsReached
+        from schedium.exceptions import NextRunMaxIterationsReached
 
         iterations = 0
         while True:

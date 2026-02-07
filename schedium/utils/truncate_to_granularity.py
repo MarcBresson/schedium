@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from pyscheduler.schemas.granularity import Granularity
+from schedium.schemas.granularity import Granularity
 
 
 def truncate(dt: datetime, granularity: Granularity) -> datetime:

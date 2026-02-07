@@ -1,13 +1,13 @@
 from datetime import datetime
 
-from pyscheduler.schemas.granularity import Granularity
-from pyscheduler.triggers import (
+from schedium.schemas.granularity import Granularity
+from schedium.triggers import (
     AtDateTimeTrigger,
     BaseCombinatorTrigger,
     BaseTrigger,
     TriggerEvent,
 )
-from pyscheduler.utils.truncate_to_granularity import truncate
+from schedium.utils.truncate_to_granularity import truncate
 
 
 def _effective_granularity(trigger: BaseTrigger) -> Granularity:

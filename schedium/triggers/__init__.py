@@ -1,20 +1,20 @@
 from __future__ import annotations
 
-from pyscheduler.triggers.base import (
+from schedium.triggers.base import (
     AndTrigger,
     BaseCombinatorTrigger,
     BaseTrigger,
     OrTrigger,
     TriggerEvent,
 )
-from pyscheduler.triggers.between import Between
-from pyscheduler.triggers.datetime import (
+from schedium.triggers.between import Between
+from schedium.triggers.datetime import (
     AtDateTimeTrigger,
     BetweenDateTime,
 )
-from pyscheduler.triggers.every import Every
-from pyscheduler.triggers.on import On
-from pyscheduler.triggers.sugar.weekly import Weekly
+from schedium.triggers.every import Every
+from schedium.triggers.on import On
+from schedium.triggers.sugar.weekly import Weekly
 
 __all__ = [
     "AndTrigger",

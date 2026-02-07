@@ -3,12 +3,12 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone, tzinfo
 from typing import Literal
 
-from pyscheduler.triggers.base import (
+from schedium.triggers.base import (
     BaseTrigger,
     Granularity,
 )
-from pyscheduler.utils.since_epoch import since_epoch
-from pyscheduler.utils.truncate_to_granularity import truncate
+from schedium.utils.since_epoch import since_epoch
+from schedium.utils.truncate_to_granularity import truncate
 
 UNIT_TO_GRANULARITY_MAP = {
     "year": Granularity.YEAR,
