@@ -41,6 +41,10 @@ dev = [
     "ipykernel",
     "ipython",
 ]
+docs = [
+  "sphinx>=7",
+  "furo>=2024.0.0",
+]
 test = [
   "pytest",
   "pytest-cov",
@@ -49,3 +53,6 @@ test = [
 
 [tool.setuptools.dynamic]
 version = {attr = "pyscheduler.__version__"}
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
