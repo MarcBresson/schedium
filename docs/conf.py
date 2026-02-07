@@ -32,6 +32,7 @@ napoleon_numpy_docstring = True
 
 html_theme = os.environ.get("SPHINX_HTML_THEME", "furo")
 html_static_path = ["_static"]
+html_logo = "logo.svg"
 
 # Make the API output a bit cleaner.
 autodoc_member_order = "bysource"
