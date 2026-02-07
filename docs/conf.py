@@ -18,7 +18,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
-    "sphinx.ext.linkcode",
     "sphinx.ext.intersphinx",
     "sphinx.ext.doctest",
     "numpydoc",
