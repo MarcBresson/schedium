@@ -13,24 +13,18 @@ Quick start
 .. code-block:: python
 
    from datetime import datetime
-
    from schedium import DidNotRun, Every, Job, Scheduler
 
    sched = Scheduler()
 
-
    def hello() -> None:
        print("hello")
 
+   print_hello_job = Job(hello, Every(unit="minute", interval=1), name="hello")
+   sched.append(print_hello_job)
 
-   sched.append(Job(hello, Every(unit="minute", interval=1), name="hello"))
-
-   results = sched.run_pending(now=datetime(2026, 2, 4, 10, 0, 30))
-   assert results[0] is DidNotRun
-
-   results = sched.run_pending(now=datetime(2026, 2, 4, 10, 1, 0))
-   # prints: hello
-   assert results == [None]
+   while True:
+      sched.run_pending()
 
 Contents
 --------
