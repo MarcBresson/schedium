@@ -39,6 +39,12 @@ Contents
 
 .. toctree::
    :maxdepth: 2
+   :caption: Concepts
+
+   Concepts <concepts/index>
+
+.. toctree::
+   :maxdepth: 2
    :caption: API Reference
 
    Job <api/job>
