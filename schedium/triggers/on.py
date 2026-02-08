@@ -1,30 +1,37 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
 
 from schedium.triggers.base import BaseTrigger, Granularity
 
 
-@dataclass(frozen=True)
 class On(BaseTrigger):
-    unit: Literal[
-        "year",
-        "month_of_year",
-        "week_of_year",
-        "weekend_days",
-        "weekdays",
-        "day_of_week",
-        "day_of_month",
-        "hour_of_day",
-        "minute_of_hour",
-        "second_of_minute",
-        "millisecond_of_second",
-    ]
-    value: int
+    def __init__(
+        self,
+        unit: Literal[
+            "year",
+            "month_of_year",
+            "week_of_year",
+            "weekend_days",
+            "weekdays",
+            "day_of_week",
+            "day_of_month",
+            "hour_of_day",
+            "minute_of_hour",
+            "second_of_minute",
+            "millisecond_of_second",
+        ],
+        value: int,
+    ):
+        self.unit = unit
+        self.value = value
+        self.granularity = self._parse_unit()
 
     def fallback_granularity(self) -> Granularity:
+        return self.granularity
+
+    def _parse_unit(self) -> Granularity:
         if self.unit in {"year"}:
             return Granularity.YEAR
         if self.unit in {"month_of_year", "week_of_year"}:
@@ -86,3 +93,6 @@ class On(BaseTrigger):
         if after.year == self.value and self.matches(after):
             return after
         return datetime(self.value, 1, 1, tzinfo=after.tzinfo)
+
+    def __repr__(self) -> str:
+        return f"On(unit={self.unit!r}, value={self.value})"

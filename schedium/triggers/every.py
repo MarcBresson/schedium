@@ -4,7 +4,6 @@ import logging
 from datetime import datetime, timedelta, timezone, tzinfo
 
 from schedium.schemas.granularity import (
-    GRANULARITY_TO_UNIT_MAP,
     UNIT_TO_GRANULARITY_MAP,
     Granularity,
     GranularityUnit,
@@ -66,6 +65,7 @@ class Every(BaseTrigger):
                 unit,
             )
 
+        self.unit = unit
         self.granularity = UNIT_TO_GRANULARITY_MAP[unit]
         self.interval = interval
         self.offset = offset
@@ -108,7 +108,9 @@ class Every(BaseTrigger):
         return datetime_from_since_epoch(value, granularity, after.tzinfo)
 
     def __repr__(self) -> str:
-        return f"Every(unit={GRANULARITY_TO_UNIT_MAP[self.granularity]!r}, interval={self.interval}, offset={self.offset})"
+        return (
+            f"Every(unit={self.unit!r}, interval={self.interval}, offset={self.offset})"
+        )
 
 
 def auto_offset_from_now(granularity: Granularity, interval: int) -> int:

@@ -30,16 +30,6 @@ UNIT_TO_GRANULARITY_MAP = {
     "millisecond": Granularity.MILLISECOND,
 }
 
-GRANULARITY_TO_UNIT_MAP = {
-    Granularity.YEAR: "year",
-    Granularity.MONTH: "month",
-    Granularity.WEEK: "week",
-    Granularity.DAY: "day",
-    Granularity.HOUR: "hour",
-    Granularity.MINUTE: "minute",
-    Granularity.SECOND: "second",
-    Granularity.MILLISECOND: "millisecond",
-}
 
 GranularityUnit: TypeAlias = Literal[
     "year",
