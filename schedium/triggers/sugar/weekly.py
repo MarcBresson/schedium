@@ -119,7 +119,7 @@ def Weekly(
     force_0_minute : bool, default False
         By default, if `at` is provided without a minute component (e.g. "09:00" or
         `time(9, 0)`), the trigger does not constrain the minute (i.e., it can run
-        every minute during the 9 o'clock hour). Setting `force_0_minute=True` makes
+        any minute during the 9 o'clock hour). Setting `force_0_minute=True` makes
         it so that the minute is constrained to 0, meaning it will only run at the top
         of the hour (e.g. 09:00:37).
 
