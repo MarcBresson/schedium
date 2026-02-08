@@ -1,52 +1,24 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
 
-from schedium.triggers.base import BaseTrigger, Granularity
+from schedium.schemas.granularity import Granularity
+from schedium.schemas.on_unit import OnUnit
+from schedium.triggers.base import BaseTrigger
 
 
 class On(BaseTrigger):
     def __init__(
         self,
-        unit: Literal[
-            "year",
-            "month_of_year",
-            "week_of_year",
-            "weekend_days",
-            "weekdays",
-            "day_of_week",
-            "day_of_month",
-            "hour_of_day",
-            "minute_of_hour",
-            "second_of_minute",
-            "millisecond_of_second",
-        ],
+        unit: OnUnit,
         value: int,
     ):
-        self.unit = unit
+        self.unit: OnUnit = unit
         self.value = value
-        self.granularity = self._parse_unit()
+        self.granularity = _parse_unit(unit)
 
     def fallback_granularity(self) -> Granularity:
         return self.granularity
-
-    def _parse_unit(self) -> Granularity:
-        if self.unit in {"year"}:
-            return Granularity.YEAR
-        if self.unit in {"month_of_year", "week_of_year"}:
-            return Granularity.MONTH
-        if self.unit in {"day_of_week", "day_of_month", "weekdays", "weekend_days"}:
-            return Granularity.DAY
-        if self.unit == "hour_of_day":
-            return Granularity.HOUR
-        if self.unit == "minute_of_hour":
-            return Granularity.MINUTE
-        if self.unit == "second_of_minute":
-            return Granularity.SECOND
-        if self.unit == "millisecond_of_second":
-            return Granularity.MILLISECOND
-        return Granularity.DAY
 
     def matches(self, now: datetime) -> bool:
         if self.unit == "weekdays":
@@ -61,14 +33,11 @@ class On(BaseTrigger):
         if self.unit == "week_of_year":
             return now.isocalendar().week == self.value
         if self.unit == "day_of_week":
-            if self.value == 0:
-                return now.weekday() == 0
             if 1 <= self.value <= 7:
                 return now.isoweekday() == self.value
-            raise ValueError("day_of_week must be in 0..6 (python) or 1..7 (cron)")
+            raise ValueError("day_of_week must be in 1..7 (cron)")
         if self.unit == "day_of_month":
             return now.day == self.value
-
         if self.unit == "hour_of_day":
             return now.hour == self.value
         if self.unit == "minute_of_hour":
@@ -77,8 +46,6 @@ class On(BaseTrigger):
             return now.second == self.value
         if self.unit == "millisecond_of_second":
             return (now.microsecond // 1000) == self.value
-
-        raise ValueError(f"Unsupported unit: {self.unit}")
 
     def datetime_of_next_run(
         self,
@@ -96,3 +63,21 @@ class On(BaseTrigger):
 
     def __repr__(self) -> str:
         return f"On(unit={self.unit!r}, value={self.value})"
+
+
+def _parse_unit(unit: OnUnit) -> Granularity:
+    if unit in {"year"}:
+        return Granularity.YEAR
+    if unit in {"month_of_year", "week_of_year"}:
+        return Granularity.MONTH
+    if unit in {"day_of_week", "day_of_month", "weekdays", "weekend_days"}:
+        return Granularity.DAY
+    if unit == "hour_of_day":
+        return Granularity.HOUR
+    if unit == "minute_of_hour":
+        return Granularity.MINUTE
+    if unit == "second_of_minute":
+        return Granularity.SECOND
+    if unit == "millisecond_of_second":
+        return Granularity.MILLISECOND
+    return Granularity.DAY
