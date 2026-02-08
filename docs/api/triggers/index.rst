@@ -8,6 +8,7 @@ This section documents the trigger primitives and helpers available in schedium.
 
    base <base>
    every <every>
+   tick <tick>
    on <on>
    between <between>
    datetime <datetime>

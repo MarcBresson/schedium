@@ -35,7 +35,7 @@ Contents
    :caption: Guides
 
    jobs <usage/jobs>
-   on <usage/on>
+   triggers <usage/triggers>
 
 .. toctree::
    :maxdepth: 2
