@@ -112,8 +112,9 @@ def Weekly(
         only first 3 letters are considered) or an integer in ISO format where
         Monday=1 and Sunday=7.
     at: str | time, optional
-        Time of day to run at. If not provided, defaults to 00:00:00. Can be a
-        `datetime.time` object, or a string in "HH:MM" or "HH:MM:SS[.mmm]" format.
+        Time of day to run at. If not provided, it will not constrain the time.
+        Can be a `datetime.time` object, or a string in "HH:MM" or
+        "HH:MM:SS[.mmm]" format.
     force_0_minute: bool, default False
         By default, if `at` is provided without a minute component (e.g. "09:00" or
         `time(9, 0)`), the trigger does not constrain the minute (i.e., it can run

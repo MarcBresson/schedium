@@ -39,8 +39,8 @@ Contents
    on
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: API Reference
 
-   api/job
-   api/triggers/on
+   Job <api/job>
+   Triggers <api/triggers/index>

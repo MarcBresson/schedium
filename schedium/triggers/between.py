@@ -9,12 +9,83 @@ from schedium.triggers.base import BaseTrigger, Granularity
 
 @dataclass(frozen=True)
 class Between(BaseTrigger):
+    """Constraint trigger that matches when a datetime field is within a range.
+
+    `Between` is a **constraint**: it filters time, but does not define a cadence.
+    To schedule a job, combine it with a tick source such as
+    :class:`~schedium.triggers.every.Every`, :class:`~schedium.triggers.sugar.tick.Tick`,
+    or :class:`~schedium.triggers.datetime.AtDateTime`.
+
+    Parameters
+    ----------
+    unit:
+        Which datetime component to examine.
+
+        Supported values:
+
+        - ``"year"``
+        - ``"month_of_year"`` (1..12)
+        - ``"week_of_year"`` (ISO week number via ``datetime.isocalendar().week``)
+        - ``"day_of_week"`` (1..7 where 1=Mon, 7=Sun)
+        - ``"day_of_month"`` (1..31)
+        - ``"hour_of_day"`` (0..23)
+        - ``"minute_of_hour"`` (0..59)
+        - ``"second_of_minute"`` (0..59)
+        - ``"millisecond_of_second"`` (0..999)
+    start:
+        Inclusive lower bound for the selected unit.
+    end:
+        Inclusive upper bound for the selected unit.
+
+    Notes
+    -----
+    Inclusivity
+        Ranges are **inclusive**: a datetime matches when ``start <= value <= end``.
+
+    Validation
+        If ``start > end`` a ``ValueError`` is raised.
+
+        For ``unit in {"weekdays", "weekend_days"}``, `start` and `end` are
+        ignored by the matching logic, but the ``start <= end`` validation still
+        applies.
+
+    Day-of-week numbering
+        ``unit="day_of_week"`` uses **ISO / cron-style** numbering (1..7) via
+        :meth:`datetime.datetime.isoweekday`. Values outside 1..7 raise
+        ``ValueError``.
+
+    Next-run computation
+        Most units fall back to a generic forward scan in
+        :meth:`~schedium.triggers.base.BaseTrigger.datetime_of_next_run` using an
+        inferred granularity.
+
+        ``unit="year"`` overrides :meth:`datetime_of_next_run` to return:
+
+        - ``None`` when ``after.year > end``
+        - ``after`` when already within the range and matching
+        - ``datetime(start, 1, 1, tzinfo=after.tzinfo)`` otherwise
+
+    Examples
+    --------
+    Working hours: any 10 minute between 09:00 and 17:00
+
+    >>> from schedium import Between, Every
+    >>> trigger = Every(unit="minute", interval=10) & Between(unit="hour_of_day", start=9, end=17)
+
+    First business week of the month (Mon..Fri)
+
+    >>> from schedium import Between, Tick
+    >>> trigger = (
+    ...     Tick(granularity="day")
+    ...     & Between(unit="day_of_month", start=1, end=7)
+    ...     & Between(unit="day_of_week", start=1, end=5)
+    ... )
+    """
+
     unit: Literal[
         "year",
         "month_of_year",
         "week_of_year",
-        "weekend_days",
-        "weekdays",
         "day_of_week",
         "day_of_month",
         "hour_of_day",
@@ -30,7 +101,7 @@ class Between(BaseTrigger):
             return Granularity.YEAR
         if self.unit in {"month_of_year", "week_of_year"}:
             return Granularity.MONTH
-        if self.unit in {"day_of_week", "day_of_month", "weekdays", "weekend_days"}:
+        if self.unit in {"day_of_week", "day_of_month"}:
             return Granularity.DAY
         if self.unit == "hour_of_day":
             return Granularity.HOUR
@@ -45,11 +116,6 @@ class Between(BaseTrigger):
     def matches(self, now: datetime) -> bool:
         if self.start > self.end:
             raise ValueError("start must be <= end")
-
-        if self.unit == "weekdays":
-            return now.weekday() < 5
-        if self.unit == "weekend_days":
-            return now.weekday() >= 5
 
         if self.unit == "year":
             v = now.year

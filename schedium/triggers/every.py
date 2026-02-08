@@ -47,6 +47,93 @@ def datetime_from_since_epoch(
 
 
 class Every(BaseTrigger):
+    """Tick-source trigger that matches on a fixed cadence.
+
+    `Every` is a **tick source**: it defines *when time advances* for a schedule.
+    When it matches, the scheduler may run the job (subject to deduplication and
+    any additional constraints).
+
+    Conceptually, `Every` divides time into buckets of a given granularity
+    (minute/hour/day/etc.) starting at the Unix epoch, and matches when the
+    bucket number satisfies::
+
+        unit_since_epoch % interval == offset
+
+    unit_since_epoch is the number of complete `unit` buckets since the Unix
+    epoch. For example, for `unit="minute"`, it counts the number of complete
+    minutes since 1970-01-01T00:00:00Z.
+
+    Parameters
+    ----------
+    unit:
+        The cadence unit. One of ``"year"``, ``"month"``, ``"week"``, ``"day"``,
+        ``"hour"``, ``"minute"``, ``"second"``, ``"millisecond"``.
+    interval:
+        The period in number of `unit` buckets. Must be ``> 0``.
+
+        Example: ``interval=5`` with ``unit="minute"`` means every 5 minutes on
+        epoch-aligned boundaries.
+    offset:
+        Phase offset within the cycle. Must satisfy ``0 <= offset < interval``.
+
+        Example: with ``Every(unit="minute", interval=5, offset=2)``, the trigger
+        matches for minute buckets numbered 2, 7, 12, ... since epoch.
+    auto_offset:
+        If True, ignores the provided `offset` and chooses an offset based on
+        the current time (UTC) such that the trigger matches immediately and
+        then repeats every `interval` buckets.
+
+        This is useful when you want to start a job “now” but still maintain a
+        stable cadence afterward.
+
+    Notes
+    -----
+    Alignment (important)
+        `Every` is **epoch-aligned**, not “relative to job creation time” when
+        auto_offset is False. For example, ``Every(unit="hour", interval=1)``
+        matches exactly on the hour. If you need a “run **once** sometime after X”
+        semantics, consider :class:`~schedium.triggers.datetime.AtDateTime`.
+
+    Deduplication
+        schedium deduplicates at the job level using a trigger event token.
+        For `Every`, the effective token bucket is the trigger's granularity
+        (minute/hour/day...). Calling ``Scheduler.run_pending`` repeatedly
+        within the same bucket will run the job only once.
+
+    `interval == 1`
+        When ``interval=1``, `Every` matches every bucket. The project logs a
+        warning suggesting :class:`~schedium.triggers.sugar.tick.Tick` instead,
+        which is often clearer for “always match, but dedup by granularity”.
+
+    Timezones
+        `since_epoch(...)` uses the provided ``datetime``. If you use timezone-
+        aware datetimes, keep them consistent across calls.
+
+    Examples
+    --------
+    Every 5 minutes
+
+    >>> from schedium import Every
+    >>> Every(unit="minute", interval=5)
+    Every(unit='minute', interval=5, offset=0)
+
+    Every 5 minutes, but shifted by 2 minutes
+
+    >>> from schedium import Every
+    >>> Every(unit="minute", interval=5, offset=2)
+    Every(unit='minute', interval=5, offset=2)
+
+    Every 2 hours minute 30 (cadence + constraints)
+
+    >>> from schedium import Every, On
+    >>> trigger = Every(unit="hour", interval=2) & On(unit="minute_of_hour", value=30)
+
+    Auto-offset: run immediately, then every 10 minutes
+
+    >>> from schedium import Every
+    >>> trigger = Every(unit="minute", interval=10, auto_offset=True)
+    """
+
     def __init__(
         self,
         unit: GranularityUnit,
