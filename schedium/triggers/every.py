@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta, timezone, tzinfo
 from typing import Literal
 
@@ -9,6 +10,8 @@ from schedium.triggers.base import (
 )
 from schedium.utils.since_epoch import since_epoch
 from schedium.utils.truncate_to_granularity import truncate
+
+logger = logging.getLogger(__name__)
 
 UNIT_TO_GRANULARITY_MAP = {
     "year": Granularity.YEAR,
@@ -74,6 +77,12 @@ class Every(BaseTrigger):
             raise ValueError("interval must be > 0")
         if not (0 <= offset < interval):
             raise ValueError("offset must satisfy 0 <= offset < interval")
+        if interval == 1:
+            logger.warning(
+                "Prefer using Tick(unit=%r) instead of Every(unit=%r, interval=1)",
+                unit,
+                unit,
+            )
 
         self.unit = unit
         self.interval = interval
