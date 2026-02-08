@@ -7,6 +7,7 @@ from schedium.triggers.base import (
     OrTrigger,
     TriggerEvent,
 )
+from schedium.utils.window import TimeWindow
 from schedium.triggers.between import Between
 from schedium.triggers.datetime import (
     AtDateTime,
@@ -26,6 +27,7 @@ __all__ = [
     "Every",
     "On",
     "OrTrigger",
+    "TimeWindow",
     "TriggerEvent",
     "Weekly",
 ]

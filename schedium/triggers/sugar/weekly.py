@@ -150,7 +150,7 @@ def Weekly(
 
     Using `Tick(WEEK)` (instead of `Every(unit="week", interval=1)`) avoids forcing
     alignment to week boundaries (e.g. Monday 00:00). That alignment can make
-    `datetime_of_next_run()` for AND-combinations like "Monday at 09:30" converge
+    `next_window()` for AND-combinations like "Monday at 09:30" converge
     poorly by repeatedly jumping to week boundaries.
     """
 

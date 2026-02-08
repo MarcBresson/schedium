@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from schedium.triggers.base import BaseTrigger, Granularity
+from schedium.utils.window import TimeWindow
 
 
 @dataclass(frozen=True)
@@ -71,20 +72,20 @@ class BetweenDateTime(BaseTrigger):
     def fallback_granularity(self) -> Granularity:
         return Granularity.SECOND
 
-    def datetime_of_next_run(
+    def next_window(
         self,
         after: datetime,
-        *args,
-        **kwargs,
-    ) -> datetime | None:
+        *,
+        max_iterations: int = 100_000,
+    ) -> TimeWindow | None:
         if self.start_date > self.end_date:
             raise ValueError("start_date must be <= end_date")
 
-        if after <= self.start_date:
-            return self.start_date
-        if self.start_date <= after <= self.end_date:
-            return after
-        return None
+        if after > self.end_date:
+            return None
+
+        start = self.start_date if after <= self.start_date else after
+        return TimeWindow(start=start, end=self.end_date)
 
 
 @dataclass(frozen=True)
@@ -152,10 +153,12 @@ class AtDateTime(BaseTrigger):
     def matches(self, now: datetime) -> bool:
         return now >= self.run_date
 
-    def datetime_of_next_run(
+    def next_window(
         self,
         after: datetime,
-        *args,
-        **kwargs,
-    ) -> datetime | None:
-        return self.run_date if self.run_date >= after else None
+        *,
+        max_iterations: int = 100_000,
+    ) -> TimeWindow | None:
+        if self.run_date < after:
+            return None
+        return TimeWindow(start=self.run_date, end=self.run_date)

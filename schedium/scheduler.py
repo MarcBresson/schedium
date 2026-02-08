@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from contextlib import suppress
 from datetime import datetime
 
-from schedium.exceptions import NotATickingTrigger
 from schedium.job import Job
 from schedium.triggers import (
     AtDateTime,
@@ -134,7 +132,7 @@ class Scheduler:
 
     def time_of_next_run(
         self,
-        after: datetime,
+        after: datetime | None = None,
         *,
         max_iterations: int = 100_000,
     ) -> datetime | None:
@@ -147,20 +145,20 @@ class Scheduler:
 
         Parameters
         ----------
-        after:
-            Lower bound (inclusive) for the computed next run time.
+        after : datetime, optional
+            Lower bound (inclusive) for the computed next run time. If omitted,
+            uses the current system time.
         max_iterations:
             Safety cap used by some triggers/combinators that scan forward.
         """
+        if after is None:
+            after = datetime.now()
+
         next_runs: list[datetime] = []
         for job in self.jobs:
-            # Ignore triggers that can't compute a next run time
-            with suppress(NotATickingTrigger):
-                next_run = job.trigger.datetime_of_next_run(
-                    after, max_iterations=max_iterations
-                )
-                if next_run is not None:
-                    next_runs.append(next_run)
+            next_run = job.datetime_of_next_run(after, max_iterations=max_iterations)
+            if next_run is not None:
+                next_runs.append(next_run)
         return min(next_runs) if next_runs else None
 
     def __repr__(self) -> str:

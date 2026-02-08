@@ -8,6 +8,7 @@ from schedium.schemas.granularity import (
     GranularityUnit,
 )
 from schedium.triggers.base import BaseTrigger
+from schedium.utils.window import TimeWindow
 
 
 class Tick(BaseTrigger):
@@ -51,5 +52,10 @@ class Tick(BaseTrigger):
     def matches(self, now: datetime) -> bool:
         return True
 
-    def datetime_of_next_run(self, after: datetime, *args, **kwargs) -> datetime:
-        return after
+    def next_window(
+        self,
+        after: datetime,
+        *,
+        max_iterations: int = 100_000,
+    ) -> TimeWindow:
+        return TimeWindow(start=after, end=None)

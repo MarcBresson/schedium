@@ -1,10 +1,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Literal
 
-from schedium.triggers.base import BaseTrigger, Granularity
+from schedium.triggers.base import (
+    BaseTrigger,
+    Granularity,
+    TimeWindow,
+    _bucket_end_inclusive,
+    _increment,
+    _scan_next_match_start,
+)
+from schedium.utils.truncate_to_granularity import truncate
 
 
 @dataclass(frozen=True)
@@ -99,8 +107,10 @@ class Between(BaseTrigger):
     def fallback_granularity(self) -> Granularity:
         if self.unit in {"year"}:
             return Granularity.YEAR
-        if self.unit in {"month_of_year", "week_of_year"}:
+        if self.unit in {"month_of_year"}:
             return Granularity.MONTH
+        if self.unit in {"week_of_year"}:
+            return Granularity.WEEK
         if self.unit in {"day_of_week", "day_of_month"}:
             return Granularity.DAY
         if self.unit == "hour_of_day":
@@ -144,18 +154,69 @@ class Between(BaseTrigger):
 
         return self.start <= v <= self.end
 
-    def datetime_of_next_run(
+    def next_window(
         self,
         after: datetime,
         *,
         max_iterations: int = 100_000,
-    ) -> datetime | None:
-        if self.unit != "year":
-            return super().datetime_of_next_run(after, max_iterations=max_iterations)
+    ) -> TimeWindow | None:
         if self.start > self.end:
             raise ValueError("start must be <= end")
-        if after.year > self.end:
-            return None
-        if self.start <= after.year <= self.end and self.matches(after):
-            return after
-        return datetime(self.start, 1, 1, tzinfo=after.tzinfo)
+
+        # Year range can be computed without scanning.
+        if self.unit == "year":
+            if after.year > self.end:
+                return None
+
+            start_dt = after
+            if after.year < self.start:
+                start_dt = datetime(self.start, 1, 1, tzinfo=after.tzinfo)
+            elif not self.matches(after):
+                # after.year is within [start,end] but doesn't match (shouldn't happen)
+                start_dt = datetime(self.start, 1, 1, tzinfo=after.tzinfo)
+
+            end_exclusive = datetime(self.end + 1, 1, 1, tzinfo=after.tzinfo)
+            return TimeWindow(
+                start=start_dt, end=end_exclusive - timedelta(microseconds=1)
+            )
+
+        granularity = self.fallback_granularity()
+
+        start_dt: datetime | None = None
+        if self.matches(after):
+            start_dt = after
+        else:
+            start_dt = _scan_next_match_start(
+                self,
+                after,
+                granularity=granularity,
+                max_iterations=max_iterations,
+            )
+            if start_dt is None:
+                return None
+
+        # Expand to the end of the contiguous matching region by stepping buckets.
+        bucket = truncate(start_dt, granularity)
+        if not self.matches(bucket):
+            # Safety: if we landed inside a matching bucket, normalize.
+            bucket = truncate(start_dt, granularity)
+
+        next_bucket = _increment(bucket, granularity)
+        steps = 0
+        while self.matches(next_bucket):
+            if steps >= max_iterations:
+                break
+            bucket = next_bucket
+            next_bucket = _increment(bucket, granularity)
+            steps += 1
+
+        if steps >= max_iterations:
+            # Fall back to a single bucket window to avoid unbounded loops.
+            return TimeWindow(
+                start=start_dt, end=_bucket_end_inclusive(start_dt, granularity)
+            )
+
+        window_end = next_bucket - timedelta(microseconds=1)
+        if window_end < start_dt:
+            window_end = _bucket_end_inclusive(start_dt, granularity)
+        return TimeWindow(start=start_dt, end=window_end)

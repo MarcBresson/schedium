@@ -9,6 +9,7 @@ from schedium.schemas.granularity import (
     GranularityUnit,
 )
 from schedium.triggers.base import BaseTrigger
+from schedium.utils.window import TimeWindow
 from schedium.utils.since_epoch import since_epoch
 from schedium.utils.truncate_to_granularity import truncate
 
@@ -172,17 +173,12 @@ class Every(BaseTrigger):
         granularity = self.required_granularity()
         return since_epoch(now, granularity) % self.interval == self.offset
 
-    def datetime_of_next_run(
+    def next_window(
         self,
         after: datetime,
-        *args,
-        **kwargs,
-    ) -> datetime:
-        """
-        Calculate the next run time after the given datetime.
-
-        It will return the earliest time of the next interval that is >= `after`.
-        """
+        *,
+        max_iterations: int = 100_000,
+    ) -> TimeWindow:
         granularity = self.required_granularity()
 
         start = since_epoch(after, granularity)
@@ -192,7 +188,11 @@ class Every(BaseTrigger):
         remainder = start % self.interval
         delta = (self.offset - remainder) % self.interval
         value = start + delta
-        return datetime_from_since_epoch(value, granularity, after.tzinfo)
+        bucket_start = datetime_from_since_epoch(value, granularity, after.tzinfo)
+        bucket_end = datetime_from_since_epoch(value + 1, granularity, after.tzinfo)
+        return TimeWindow(
+            start=bucket_start, end=bucket_end - timedelta(microseconds=1)
+        )
 
     def __repr__(self) -> str:
         return (

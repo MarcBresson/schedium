@@ -104,5 +104,29 @@ class Job:
         self.last_event = event
         return result
 
+    def datetime_of_next_run(
+        self,
+        after: datetime | None = None,
+        *,
+        max_iterations: int = 100_000,
+    ) -> datetime | None:
+        """Return the next run datetime for this job.
+
+        This is derived from the trigger's next validity window.
+
+        Parameters
+        ----------
+        after : datetime, optional
+            Lower bound (inclusive) for the computed next run time. If omitted,
+            uses the current system time.
+        max_iterations:
+            Safety cap used by some triggers/combinators that scan forward.
+        """
+        if after is None:
+            after = datetime.now()
+
+        window = self.trigger.next_window(after, max_iterations=max_iterations)
+        return None if window is None else window.start
+
     def __repr__(self) -> str:
         return f"Job(name={self.name!r}, func={self.func!r}, trigger={self.trigger!r})"

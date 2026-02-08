@@ -1,10 +1,15 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from schedium.schemas.granularity import Granularity
 from schedium.schemas.on_unit import OnUnit
-from schedium.triggers.base import BaseTrigger
+from schedium.triggers.base import (
+    BaseTrigger,
+    _bucket_end_inclusive,
+    _scan_next_match_start,
+)
+from schedium.utils.window import TimeWindow
 
 
 class On(BaseTrigger):
@@ -121,21 +126,48 @@ class On(BaseTrigger):
         if self.unit == "millisecond_of_second":
             return (now.microsecond // 1000) == self.value
 
-    def datetime_of_next_run(
+    def next_window(
         self,
         after: datetime,
         *,
         max_iterations: int = 100_000,
-    ) -> datetime | None:
-        if self.unit != "year":
-            return super().datetime_of_next_run(after, max_iterations=max_iterations)
+    ) -> TimeWindow | None:
+        # Year can be computed without scanning.
+        if self.unit == "year":
+            assert self.value is not None, (
+                f"value must be provided for unit {self.unit!r}"
+            )
+            if after.year > self.value:
+                return None
 
-        assert self.value is not None, f"value must be provided for unit {self.unit!r}"
-        if after.year > self.value:
-            return None
-        if after.year == self.value and self.matches(after):
-            return after
-        return datetime(self.value, 1, 1, tzinfo=after.tzinfo)
+            start_dt = (
+                after
+                if self.matches(after)
+                else datetime(self.value, 1, 1, tzinfo=after.tzinfo)
+            )
+            end_exclusive = datetime(self.value + 1, 1, 1, tzinfo=after.tzinfo)
+            return TimeWindow(
+                start=start_dt, end=end_exclusive - timedelta(microseconds=1)
+            )
+
+        granularity = self.granularity
+
+        start_dt: datetime | None = None
+        if self.matches(after):
+            start_dt = after
+        else:
+            start_dt = _scan_next_match_start(
+                self,
+                after,
+                granularity=granularity,
+                max_iterations=max_iterations,
+            )
+            if start_dt is None:
+                return None
+
+        return TimeWindow(
+            start=start_dt, end=_bucket_end_inclusive(start_dt, granularity)
+        )
 
     def __repr__(self) -> str:
         return f"On(unit={self.unit!r}, value={self.value})"
@@ -144,8 +176,10 @@ class On(BaseTrigger):
 def _parse_unit(unit: OnUnit) -> Granularity:
     if unit in {"year"}:
         return Granularity.YEAR
-    if unit in {"month_of_year", "week_of_year"}:
+    if unit in {"month_of_year"}:
         return Granularity.MONTH
+    if unit in {"week_of_year"}:
+        return Granularity.WEEK
     if unit in {"day_of_week", "day_of_month", "weekdays", "weekend_days"}:
         return Granularity.DAY
     if unit == "hour_of_day":
