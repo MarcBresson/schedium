@@ -75,6 +75,7 @@ Late start + one-shot triggers
 API reference
 -------------
 
+full API reference for :class:`~schedium.triggers.on.On` avaible in :ref:`api/triggers/on`.
+
 .. autoclass:: schedium.triggers.on.On
-   :members:
    :show-inheritance:

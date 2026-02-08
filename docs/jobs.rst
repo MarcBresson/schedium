@@ -136,3 +136,11 @@ call it twice for the same token.
 
 In normal usage you should call ``Scheduler.run_pending(...)`` instead of calling
 ``Job.run(...)`` directly.
+
+API reference
+-------------
+
+full API reference for :class:`~schedium.job.Job` avaible in :ref:`api/job`.
+
+.. autoclass:: schedium.job.Job
+   :show-inheritance:
