@@ -45,13 +45,17 @@ jobs:
           if-no-files-found: error
 
       - name: Trigger Read the Docs build (optional)
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.READTHEDOCS_TOKEN != '' && secrets.READTHEDOCS_PROJECT_SLUG != '' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         env:
           READTHEDOCS_TOKEN: ${{ secrets.READTHEDOCS_TOKEN }}
           READTHEDOCS_PROJECT_SLUG: ${{ secrets.READTHEDOCS_PROJECT_SLUG }}
           READTHEDOCS_VERSION: ${{ secrets.READTHEDOCS_VERSION }}
         run: |
           set -euo pipefail
+          if [[ -z "${READTHEDOCS_TOKEN:-}" || -z "${READTHEDOCS_PROJECT_SLUG:-}" ]]; then
+            echo "Skipping RTD trigger: READTHEDOCS_TOKEN/READTHEDOCS_PROJECT_SLUG not set"
+            exit 0
+          fi
           version="${READTHEDOCS_VERSION:-latest}"
           echo "Triggering RTD build: project=${READTHEDOCS_PROJECT_SLUG} version=${version}"
           curl -fsS -X POST \
