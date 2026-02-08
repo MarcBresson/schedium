@@ -62,3 +62,8 @@ version = {attr = "schedium.__version__"}
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
+[tool.numpydoc_validation]
+checks = [
+    "all",   # report on all checks, except the below
+]

@@ -23,3 +23,8 @@ repos:
     rev: v1.19.1
     hooks:
       - id: mypy
+
+  - repo: https://github.com/numpy/numpydoc
+    rev: v1.10.0
+    hooks:
+      - id: numpydoc-validation
