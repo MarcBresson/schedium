@@ -2,7 +2,7 @@ from datetime import datetime
 
 from schedium.schemas.granularity import Granularity
 from schedium.triggers import (
-    AtDateTimeTrigger,
+    AtDateTime,
     BaseCombinatorTrigger,
     BaseTrigger,
     TriggerEvent,
@@ -36,12 +36,12 @@ def evaluate(trigger: BaseTrigger, now: datetime) -> TriggerEvent | None:
     if not trigger.matches(now):
         return None
 
-    if isinstance(trigger, AtDateTimeTrigger):
+    if isinstance(trigger, AtDateTime):
         return TriggerEvent(token=("at", trigger.run_date))
 
     if isinstance(trigger, BaseCombinatorTrigger):
         for t in trigger.triggers:
-            if isinstance(t, AtDateTimeTrigger):
+            if isinstance(t, AtDateTime):
                 return TriggerEvent(token=("at", t.run_date))
 
     gran = _effective_granularity(trigger)

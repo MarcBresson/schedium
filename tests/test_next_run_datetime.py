@@ -4,8 +4,8 @@ from datetime import datetime
 
 import pytest
 
-from pyscheduler import AtDateTimeTrigger, Between, BetweenDateTime, Every, On
-from pyscheduler.exceptions import NextRunMaxIterationsReached
+from schedium import AtDateTime, Between, BetweenDateTime, Every, On
+from schedium.exceptions import NextRunMaxIterationsReached
 
 
 @pytest.mark.parametrize(
@@ -92,7 +92,7 @@ def test_datetime_of_next_run_every(after, expected):
     ],
 )
 def test_datetime_of_next_run_at_datetime(after, expected):
-    t = AtDateTimeTrigger(run_date=datetime(2026, 2, 2, 9, 12, 0))
+    t = AtDateTime(run_date=datetime(2026, 2, 2, 9, 12, 0))
     assert t.datetime_of_next_run(after) == expected
 
 
@@ -103,7 +103,7 @@ def test_datetime_of_next_run_or_combinator_chooses_earliest_child():
 
 
 def test_datetime_of_next_run_and_combinator_with_at_datetime():
-    at = AtDateTimeTrigger(run_date=datetime(2026, 2, 2, 9, 12, 0))
+    at = AtDateTime(run_date=datetime(2026, 2, 2, 9, 12, 0))
     constraints = On(unit="day_of_week", value=0) & Between(
         unit="hour_of_day", start=9, end=17
     )

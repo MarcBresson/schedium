@@ -5,7 +5,7 @@ __version__ = "0.0.0"
 from .scheduler import DidNotRun, Job, Scheduler
 from .triggers import (
     AndTrigger,
-    AtDateTimeTrigger,
+    AtDateTime,
     Between,
     BetweenDateTime,
     Every,
@@ -16,7 +16,7 @@ from .triggers import (
 
 __all__ = [
     "AndTrigger",
-    "AtDateTimeTrigger",
+    "AtDateTime",
     "Between",
     "BetweenDateTime",
     "DidNotRun",

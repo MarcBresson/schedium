@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pyscheduler import AtDateTimeTrigger, Job, Scheduler
+from schedium import AtDateTime, Job, Scheduler
 
 
 def test_at_datetime_runs_once_even_if_late():
     run_at = datetime(2026, 2, 4, 10, 0, 0)
-    trigger = AtDateTimeTrigger(run_date=run_at)
+    trigger = AtDateTime(run_date=run_at)
 
     ran: list[int] = []
     sched = Scheduler()
@@ -29,7 +29,7 @@ def test_at_datetime_runs_once_even_if_late():
 def test_at_datetime_with_constraints():
     # Even if evaluated later, AND with constraints should still run once.
     run_at = datetime(2026, 2, 4, 10, 0, 0)
-    trigger = AtDateTimeTrigger(run_date=run_at)
+    trigger = AtDateTime(run_date=run_at)
 
     ran: list[int] = []
     sched = Scheduler()

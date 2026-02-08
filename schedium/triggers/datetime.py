@@ -36,7 +36,7 @@ class BetweenDateTime(BaseTrigger):
 
 
 @dataclass(frozen=True)
-class AtDateTimeTrigger(BaseTrigger):
+class AtDateTime(BaseTrigger):
     run_date: datetime
 
     def required_granularity(self) -> Granularity:

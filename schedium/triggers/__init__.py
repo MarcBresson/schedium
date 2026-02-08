@@ -9,7 +9,7 @@ from schedium.triggers.base import (
 )
 from schedium.triggers.between import Between
 from schedium.triggers.datetime import (
-    AtDateTimeTrigger,
+    AtDateTime,
     BetweenDateTime,
 )
 from schedium.triggers.every import Every
@@ -18,7 +18,7 @@ from schedium.triggers.sugar.weekly import Weekly
 
 __all__ = [
     "AndTrigger",
-    "AtDateTimeTrigger",
+    "AtDateTime",
     "BaseTrigger",
     "BaseCombinatorTrigger",
     "Between",

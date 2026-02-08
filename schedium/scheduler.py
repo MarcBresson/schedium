@@ -6,7 +6,7 @@ from datetime import datetime
 from schedium.exceptions import NotATickingTrigger
 from schedium.job import Job
 from schedium.triggers import (
-    AtDateTimeTrigger,
+    AtDateTime,
     BaseCombinatorTrigger,
     BaseTrigger,
     Every,
@@ -16,7 +16,7 @@ from schedium.triggers import (
 def _has_tick_source(trigger: BaseTrigger) -> bool:
     from schedium.triggers.sugar.tick import Tick
 
-    if isinstance(trigger, (Every, Tick, AtDateTimeTrigger)):
+    if isinstance(trigger, (Every, Tick, AtDateTime)):
         return True
     if isinstance(trigger, BaseCombinatorTrigger):
         return any(_has_tick_source(t) for t in trigger.triggers)
@@ -101,7 +101,7 @@ class Scheduler:
             raise ValueError(
                 "Trigger is not schedulable without a tick source. "
                 "Combine constraints (On/Between/BetweenDateTime) with a tick source "
-                "like Every(...), Tick(...), or AtDateTimeTrigger(...)."
+                "like Every(...), Tick(...), or AtDateTime(...)."
             )
         self.jobs.append(job)
 
