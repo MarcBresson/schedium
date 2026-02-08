@@ -34,12 +34,6 @@ Repository = "https://github.com/MarcBresson"
 Issues = "https://github.com/MarcBresson"
 Changelog = "https://github.com/MarcBresson"
 
-[project.optional-dependencies]
-docs = [
-  "sphinx>=7",
-  "furo>=2024.0.0",
-]
-
 [dependency-groups]
 dev = [
     "mypy",

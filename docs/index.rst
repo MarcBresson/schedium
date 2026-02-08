@@ -5,15 +5,14 @@ schedium is a small in-process scheduler.
 
 - You register **jobs** (a callable + a trigger).
 - You call ``Scheduler.run_pending(...)`` periodically.
-- Jobs run inline and are **deduplicated** per trigger token.
+- Jobs run inline and are **deduplicated** per trigger token, i.e., they won't run more than once for the same trigger event.
 
 Quick start
 -----------
 
 .. code-block:: python
 
-   from datetime import datetime
-   from schedium import DidNotRun, Every, Job, Weekly, Scheduler
+   from schedium import Every, Job, Weekly, Scheduler
 
    sched = Scheduler()
 
@@ -35,8 +34,8 @@ Contents
    :maxdepth: 2
    :caption: Guides
 
-   jobs
-   on
+   jobs <usage/jobs>
+   on <usage/on>
 
 .. toctree::
    :maxdepth: 2
