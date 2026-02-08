@@ -100,6 +100,11 @@ class Every(BaseTrigger):
         *args,
         **kwargs,
     ) -> datetime:
+        """
+        Calculate the next run time after the given datetime.
+
+        It will return the earliest time of the next interval that is >= `after`.
+        """
         granularity = self.required_granularity()
 
         start = since_epoch(after, granularity)
