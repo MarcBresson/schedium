@@ -1,5 +1,5 @@
 API reference: Job
-========
+==================
 
 .. autoclass:: schedium.job.Job
    :members:

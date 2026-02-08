@@ -77,7 +77,7 @@ Internally, schedium evaluates triggers into a ``TriggerEvent(token=...)``.
 
 - For most triggers, the token is a **time bucket** derived from an effective granularity
   (minute/hour/day/etc.).
-- For ``AtDateTimeTrigger``, the token is tied to the target datetime, so it runs **once**
+- For ``AtDateTime``, the token is tied to the target datetime, so it runs **once**
   even if evaluated late.
 
 This means:
@@ -93,14 +93,14 @@ Many triggers are **constraints** (they only filter time), for example:
 - ``Between(unit="hour_of_day", start=9, end=17)``
 - ``BetweenDateTime(start_date=..., end_date=...)``
 
-A constraint alone doesnt define a cadence. To be schedulable, a job must include a
+A constraint alone doesn't define a cadence. To be schedulable, a job must include a
 **tick source**, such as:
 
 - ``Every(unit=..., interval=...)``
 - ``Tick(granularity=...)`` (advanced)
-- ``AtDateTimeTrigger(...)`` (one-shot)
+- ``AtDateTime(...)`` (one-shot)
 
-Example: every minute, but only during working hours
+Example: every minute, but only during working hours
 
 .. code-block:: python
 
@@ -125,7 +125,7 @@ Return values
 
 ``Scheduler.run_pending(...)`` returns a list aligned with ``Scheduler.jobs``:
 
-- If a job runs, its entry is the callables return value.
+- If a job runs, its entry is the callable's return value.
 - If a job does not run, its entry is the sentinel ``DidNotRun``.
 
 Errors
