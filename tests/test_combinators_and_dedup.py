@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pyscheduler import Every, Job, On, Scheduler
+from schedium import Every, Job, On, Scheduler
 
 
 def test_or_on_minutes():

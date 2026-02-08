@@ -5,8 +5,8 @@ from typing import Literal
 
 import pytest
 
-import pyscheduler.triggers.every as every_mod
-from pyscheduler.triggers.every import Every
+import schedium.triggers.every as every_mod
+from schedium.triggers.every import Every
 
 
 @pytest.fixture

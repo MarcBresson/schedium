@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pyscheduler import BetweenDateTime, Every, Job, Scheduler
+from schedium import BetweenDateTime, Every, Job, Scheduler
 
 
 def test_between_datetime_as_gate():

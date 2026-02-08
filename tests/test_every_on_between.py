@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pyscheduler import Between, Every, Job, On, Scheduler
+from schedium import Between, Every, Job, On, Scheduler
 
 
 def test_every_5_minutes():

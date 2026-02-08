@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, time
 
-from pyscheduler import Weekly
+from schedium import Weekly
 
 
 def test_weekly_day_string_datetime_of_next_run():

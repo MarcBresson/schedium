@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pyscheduler import Between, Every, On
+from schedium import Between, Every, On
 
 
 def test_example_from_interface_first_draft():
