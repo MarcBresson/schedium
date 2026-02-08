@@ -25,7 +25,8 @@ DidNotRun = object()
 
 
 class Scheduler:
-    """Simple in-process scheduler.
+    """
+    Simple in-process scheduler.
 
     This scheduler is intentionally minimal:
 
@@ -34,6 +35,14 @@ class Scheduler:
     - Deduplication is handled per-job: if you call :meth:`run_pending` multiple
       times within the same trigger "token" (e.g., the same minute bucket), the
       job runs only once.
+
+        Notes
+        -----
+        - :meth:`run_pending` returns a list aligned with :attr:`jobs`. For jobs that
+            are not due, the entry is the sentinel :obj:`DidNotRun`.
+        - Many triggers match only at specific boundaries (minute/hour/day). In
+            production, call :meth:`run_pending` on a short interval (e.g., once per
+            second) so you don't skip over a matching boundary.
 
     Examples
     --------
@@ -80,21 +89,25 @@ class Scheduler:
 
     >>> sched.time_of_next_run(after=datetime(2026, 2, 2, 8, 0, 1))
     datetime.datetime(2026, 2, 3, 8, 0)
-
-    Notes
-    -----
-    - :meth:`run_pending` returns a list aligned with :attr:`jobs`. For jobs that
-      are not due, the entry is the sentinel :obj:`DidNotRun`.
-    - Many triggers match only at specific boundaries (minute/hour/day). In
-      production, call :meth:`run_pending` on a short interval (e.g., once per
-      second) so you don't skip over a matching boundary.
     """
 
     def __init__(self):
         self.jobs: list[Job] = []
 
-    def append(self, job: Job):
-        """Append an already-constructed :class:`~schedium.job.Job`."""
+    def append(self, job: Job) -> None:
+        """
+        Append an already-constructed job.
+
+        Parameters
+        ----------
+        job : schedium.job.Job
+            Job to append.
+
+        Raises
+        ------
+        ValueError
+            If the job's trigger tree contains no tick source.
+        """
         if not _has_tick_source(job.trigger):
             raise ValueError(
                 "Trigger is not schedulable without a tick source. "
@@ -107,11 +120,12 @@ class Scheduler:
         return self.jobs[item]
 
     def run_pending(self, now: datetime | None = None) -> list[object]:
-        """Run all jobs that are due at ``now``.
+        """
+        Run all jobs that are due at ``now``.
 
         Parameters
         ----------
-        now:
+        now : datetime, optional
             If provided, uses this timestamp to evaluate triggers. If omitted,
             uses the current system time.
 
@@ -136,7 +150,8 @@ class Scheduler:
         *,
         max_iterations: int = 100_000,
     ) -> datetime | None:
-        """Return the earliest next run time across all jobs.
+        """
+        Return the earliest next run time across all jobs.
 
         This asks each job's trigger for its next run time and returns the
         minimum. Triggers that cannot compute a next time (for example,
@@ -148,7 +163,7 @@ class Scheduler:
         after : datetime, optional
             Lower bound (inclusive) for the computed next run time. If omitted,
             uses the current system time.
-        max_iterations:
+        max_iterations : int, default 100_000
             Safety cap used by some triggers/combinators that scan forward.
         """
         if after is None:

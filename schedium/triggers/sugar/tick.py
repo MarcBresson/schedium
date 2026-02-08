@@ -12,7 +12,8 @@ from schedium.utils.window import TimeWindow
 
 
 class Tick(BaseTrigger):
-    """A tick source that always matches, but defines the dedup bucket.
+    """
+    A tick source that always matches, but defines the dedup bucket.
 
     In this project, a *tick source* is required for a trigger to be schedulable
     (see `Scheduler.append(...)`). Many triggers (like `On(...)` / `Between(...)`) are
@@ -36,6 +37,12 @@ class Tick(BaseTrigger):
 
     `Tick` is intended mainly for "sugar" helpers (like `Weekly(...)`) and
     advanced compositions.
+
+    Parameters
+    ----------
+    granularity : schedium.schemas.granularity.Granularity | schedium.schemas.granularity.GranularityUnit
+        Deduplication bucket size. If given as a string, it is converted via
+        :data:`~schedium.schemas.granularity.UNIT_TO_GRANULARITY_MAP`.
     """
 
     def __init__(self, granularity: Granularity | GranularityUnit) -> None:

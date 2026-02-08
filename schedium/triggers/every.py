@@ -9,9 +9,9 @@ from schedium.schemas.granularity import (
     GranularityUnit,
 )
 from schedium.triggers.base import BaseTrigger
-from schedium.utils.window import TimeWindow
 from schedium.utils.since_epoch import since_epoch
 from schedium.utils.truncate_to_granularity import truncate
+from schedium.utils.window import TimeWindow
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,8 @@ def datetime_from_since_epoch(
 
 
 class Every(BaseTrigger):
-    """Tick-source trigger that matches on a fixed cadence.
+    """
+    Tick-source trigger that matches on a fixed cadence.
 
     `Every` is a **tick source**: it defines *when time advances* for a schedule.
     When it matches, the scheduler may run the job (subject to deduplication and
@@ -66,20 +67,20 @@ class Every(BaseTrigger):
 
     Parameters
     ----------
-    unit:
+    unit : schedium.schemas.granularity.GranularityUnit
         The cadence unit. One of ``"year"``, ``"month"``, ``"week"``, ``"day"``,
         ``"hour"``, ``"minute"``, ``"second"``, ``"millisecond"``.
-    interval:
+    interval : int
         The period in number of `unit` buckets. Must be ``> 0``.
 
         Example: ``interval=5`` with ``unit="minute"`` means every 5 minutes on
         epoch-aligned boundaries.
-    offset:
+    offset : int, default 0
         Phase offset within the cycle. Must satisfy ``0 <= offset < interval``.
 
         Example: with ``Every(unit="minute", interval=5, offset=2)``, the trigger
         matches for minute buckets numbered 2, 7, 12, ... since epoch.
-    auto_offset:
+    auto_offset : bool, default False
         If True, ignores the provided `offset` and chooses an offset based on
         the current time (UTC) such that the trigger matches immediately and
         then repeats every `interval` buckets.
@@ -201,10 +202,23 @@ class Every(BaseTrigger):
 
 
 def auto_offset_from_now(granularity: Granularity, interval: int) -> int:
-    """Calculate the offset for an auto-offset Every trigger, based on current time.
+    """
+    Calculate an epoch-aligned offset that matches immediately.
 
     This allows for the first run to fire right away, and subsequent runs to be
     spaced by the given interval.
+
+    Parameters
+    ----------
+    granularity : schedium.schemas.granularity.Granularity
+        Granularity of the time bucket.
+    interval : int
+        Interval in number of buckets.
+
+    Returns
+    -------
+    int
+        Offset in ``[0, interval)``.
     """
     now = datetime.now(timezone.utc)
     return since_epoch(now, granularity) % interval

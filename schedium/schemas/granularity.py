@@ -3,7 +3,8 @@ from typing import Literal, TypeAlias
 
 
 class Granularity(IntEnum):
-    """How finely a schedule can fire.
+    """
+    How finely a schedule can fire.
 
     Lower values are *finer* (more frequent) than higher values.
     """

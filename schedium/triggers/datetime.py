@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime
 
 from schedium.triggers.base import BaseTrigger, Granularity
 from schedium.utils.window import TimeWindow
 
 
-@dataclass(frozen=True)
 class BetweenDateTime(BaseTrigger):
-    """Constraint trigger that matches within an inclusive datetime window.
+    """
+    Constraint trigger that matches within an inclusive datetime window.
 
     `BetweenDateTime` is a **constraint**: it filters time but does not define a
     cadence by itself. To schedule a job, combine it with a tick source such as
@@ -18,9 +17,9 @@ class BetweenDateTime(BaseTrigger):
 
     Parameters
     ----------
-    start_date:
+    start_date : datetime
         Inclusive lower bound of the window.
-    end_date:
+    end_date : datetime
         Inclusive upper bound of the window.
 
     Notes
@@ -35,9 +34,9 @@ class BetweenDateTime(BaseTrigger):
         This trigger reports a fallback granularity of
         :attr:`~schedium.schemas.granularity.Granularity.SECOND`. That fallback is
         only used for generic scanning logic in
-        :meth:`~schedium.triggers.base.BaseTrigger.datetime_of_next_run`.
+        :meth:`~schedium.triggers.base.BaseTrigger.next_window`.
         `BetweenDateTime` also implements an efficient
-        :meth:`datetime_of_next_run` that returns:
+        :meth:`next_window` that returns:
 
         - ``start_date`` when queried before the window,
         - ``after`` when queried inside the window,
@@ -61,8 +60,9 @@ class BetweenDateTime(BaseTrigger):
     >>> trigger = Every(unit="minute", interval=1) & window
     """
 
-    start_date: datetime
-    end_date: datetime
+    def __init__(self, start_date: datetime, end_date: datetime):
+        self.start_date = start_date
+        self.end_date = end_date
 
     def matches(self, now: datetime) -> bool:
         if self.start_date > self.end_date:
@@ -88,9 +88,9 @@ class BetweenDateTime(BaseTrigger):
         return TimeWindow(start=start, end=self.end_date)
 
 
-@dataclass(frozen=True)
 class AtDateTime(BaseTrigger):
-    """One-shot tick-source trigger that fires at/after a specific datetime.
+    """
+    One-shot tick-source trigger that fires at/after a specific datetime.
 
     `AtDateTime` matches when ``now >= run_date``.
 
@@ -101,7 +101,7 @@ class AtDateTime(BaseTrigger):
 
     Parameters
     ----------
-    run_date:
+    run_date : datetime
         The target datetime.
 
     Notes
@@ -142,7 +142,8 @@ class AtDateTime(BaseTrigger):
     ... )
     """
 
-    run_date: datetime
+    def __init__(self, run_date: datetime):
+        self.run_date = run_date
 
     def required_granularity(self) -> Granularity:
         return Granularity.EXACT

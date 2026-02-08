@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Literal
 
@@ -15,9 +14,9 @@ from schedium.triggers.base import (
 from schedium.utils.truncate_to_granularity import truncate
 
 
-@dataclass(frozen=True)
 class Between(BaseTrigger):
-    """Constraint trigger that matches when a datetime field is within a range.
+    """
+    Constraint trigger that matches when a datetime field is within a range.
 
     `Between` is a **constraint**: it filters time, but does not define a cadence.
     To schedule a job, combine it with a tick source such as
@@ -26,7 +25,7 @@ class Between(BaseTrigger):
 
     Parameters
     ----------
-    unit:
+    unit : str
         Which datetime component to examine.
 
         Supported values:
@@ -40,9 +39,9 @@ class Between(BaseTrigger):
         - ``"minute_of_hour"`` (0..59)
         - ``"second_of_minute"`` (0..59)
         - ``"millisecond_of_second"`` (0..999)
-    start:
+    start : int
         Inclusive lower bound for the selected unit.
-    end:
+    end : int
         Inclusive upper bound for the selected unit.
 
     Notes
@@ -53,10 +52,6 @@ class Between(BaseTrigger):
     Validation
         If ``start > end`` a ``ValueError`` is raised.
 
-        For ``unit in {"weekdays", "weekend_days"}``, `start` and `end` are
-        ignored by the matching logic, but the ``start <= end`` validation still
-        applies.
-
     Day-of-week numbering
         ``unit="day_of_week"`` uses **ISO / cron-style** numbering (1..7) via
         :meth:`datetime.datetime.isoweekday`. Values outside 1..7 raise
@@ -64,14 +59,14 @@ class Between(BaseTrigger):
 
     Next-run computation
         Most units fall back to a generic forward scan in
-        :meth:`~schedium.triggers.base.BaseTrigger.datetime_of_next_run` using an
+        :meth:`~schedium.triggers.base.BaseTrigger.next_window` using an
         inferred granularity.
 
-        ``unit="year"`` overrides :meth:`datetime_of_next_run` to return:
+        ``unit="year"`` overrides :meth:`next_window` to return:
 
         - ``None`` when ``after.year > end``
-        - ``after`` when already within the range and matching
-        - ``datetime(start, 1, 1, tzinfo=after.tzinfo)`` otherwise
+        - a window starting at ``after`` when already inside the range
+        - a window starting at ``datetime(start, 1, 1, tzinfo=after.tzinfo)`` otherwise
 
     Examples
     --------
@@ -90,19 +85,25 @@ class Between(BaseTrigger):
     ... )
     """
 
-    unit: Literal[
-        "year",
-        "month_of_year",
-        "week_of_year",
-        "day_of_week",
-        "day_of_month",
-        "hour_of_day",
-        "minute_of_hour",
-        "second_of_minute",
-        "millisecond_of_second",
-    ]
-    start: int
-    end: int
+    def __init__(
+        self,
+        unit: Literal[
+            "year",
+            "month_of_year",
+            "week_of_year",
+            "day_of_week",
+            "day_of_month",
+            "hour_of_day",
+            "minute_of_hour",
+            "second_of_minute",
+            "millisecond_of_second",
+        ],
+        start: int,
+        end: int,
+    ):
+        self.unit = unit
+        self.start = start
+        self.end = end
 
     def fallback_granularity(self) -> Granularity:
         if self.unit in {"year"}:
@@ -168,16 +169,16 @@ class Between(BaseTrigger):
             if after.year > self.end:
                 return None
 
-            start_dt = after
+            start_dt_year = after
             if after.year < self.start:
-                start_dt = datetime(self.start, 1, 1, tzinfo=after.tzinfo)
+                start_dt_year = datetime(self.start, 1, 1, tzinfo=after.tzinfo)
             elif not self.matches(after):
                 # after.year is within [start,end] but doesn't match (shouldn't happen)
-                start_dt = datetime(self.start, 1, 1, tzinfo=after.tzinfo)
+                start_dt_year = datetime(self.start, 1, 1, tzinfo=after.tzinfo)
 
             end_exclusive = datetime(self.end + 1, 1, 1, tzinfo=after.tzinfo)
             return TimeWindow(
-                start=start_dt, end=end_exclusive - timedelta(microseconds=1)
+                start=start_dt_year, end=end_exclusive - timedelta(microseconds=1)
             )
 
         granularity = self.fallback_granularity()

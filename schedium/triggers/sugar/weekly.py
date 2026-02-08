@@ -103,40 +103,25 @@ def _parse_at(at: str | time) -> tuple[int, int, int | None, int | None]:
 def Weekly(
     day: str | int, *, at: str | time | None = None, force_0_minute: bool = False
 ) -> BaseTrigger:
-    """Convenience trigger: run weekly on a specific weekday, optionally at a time.
+    """
+    Convenience trigger: run weekly on a specific weekday, optionally at a time.
 
     Parameters
     ----------
-    day: str | int
+    day : str | int
         Weekday to run on. Can be a string like "mon"/"monday" (case-insensitive,
         only first 3 letters are considered) or an integer in ISO format where
         Monday=1 and Sunday=7.
-    at: str | time, optional
+    at : str | datetime.time, optional
         Time of day to run at. If not provided, it will not constrain the time.
-        Can be a `datetime.time` object, or a string in "HH:MM" or
+        Can be a :class:`datetime.time` object, or a string in "HH:MM" or
         "HH:MM:SS[.mmm]" format.
-    force_0_minute: bool, default False
+    force_0_minute : bool, default False
         By default, if `at` is provided without a minute component (e.g. "09:00" or
         `time(9, 0)`), the trigger does not constrain the minute (i.e., it can run
         every minute during the 9 o'clock hour). Setting `force_0_minute=True` makes
         it so that the minute is constrained to 0, meaning it will only run at the top
         of the hour (e.g. 09:00:37).
-
-    Examples
-    --------
-    ```
-    Weekly("monday")
-
-    # specify a time to run at
-    Weekly("mon", at="09:30")
-    from datetime import time
-    Weekly("thursday", at=time(9, 30))
-    Weekly("thursday", at=time(9))
-
-    # don't run if job is overdue by more than a minute (e.g. if scheduler was down)
-    # i.e. only run at 09:00 sharp
-    Weekly("thursday", at=time(9, 0), force_0_minute=True)
-    ```
 
     Notes
     -----
@@ -152,6 +137,20 @@ def Weekly(
     alignment to week boundaries (e.g. Monday 00:00). That alignment can make
     `next_window()` for AND-combinations like "Monday at 09:30" converge
     poorly by repeatedly jumping to week boundaries.
+
+    Examples
+    --------
+    >>> Weekly("monday")
+
+    Specify a time to run at
+
+    >>> Weekly("mon", at="09:30")
+    >>> from datetime import time
+    >>> Weekly("thursday", at=time(9, 30))
+
+    Don't run if overdue by more than a minute (e.g., scheduler was down)
+
+    >>> Weekly("thursday", at=time(9, 0), force_0_minute=True)
     """
 
     weekday_value = _parse_weekday_to_on_value(day)

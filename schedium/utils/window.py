@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 
 @dataclass(frozen=True)
 class TimeWindow:
-    """A validity window for a trigger.
+    """
+    A validity window for a trigger.
 
     The window is inclusive on both ends: ``start <= t <= end``.
 
@@ -21,9 +22,22 @@ ONE_MICROSECOND = timedelta(microseconds=1)
 
 
 def window_overlaps(a: TimeWindow, b: TimeWindow) -> bool:
-    """Return True when two inclusive windows overlap.
+    """
+    Return True when two inclusive windows overlap.
 
     Treats ``end=None`` as +infinity.
+
+    Parameters
+    ----------
+    a : schedium.utils.window.TimeWindow
+        First window.
+    b : schedium.utils.window.TimeWindow
+        Second window.
+
+    Returns
+    -------
+    bool
+        True if the windows overlap.
     """
 
     a_end = a.end

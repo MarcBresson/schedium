@@ -1,4 +1,5 @@
-"""Job definition.
+"""
+Job definition.
 
 A :class:`~schedium.job.Job` couples:
 
@@ -24,7 +25,8 @@ from schedium.utils.evaluate import evaluate
 
 
 class Job:
-    """A scheduled unit of work.
+    """
+    A scheduled unit of work.
 
     Parameters
     ----------
@@ -34,7 +36,7 @@ class Job:
         If you need to pass arguments, wrap them in a closure or `functools.partial`.
     trigger : BaseTrigger
         The trigger that decides when this job is due.
-    name : str, default: None
+    name : str, default None
         Optional human-readable label used in `repr(job)`.
 
     Notes
@@ -71,7 +73,8 @@ class Job:
         self.last_event: TriggerEvent | None = None
 
     def is_due(self, now: datetime) -> bool:
-        """Return True if the job should run at ``now``.
+        """
+        Return True if the job should run at ``now``.
 
         A job is due when:
 
@@ -79,6 +82,16 @@ class Job:
         2) that token is different from the last token the job already ran for.
 
         This method does not mutate state.
+
+        Parameters
+        ----------
+        now : datetime
+            Timestamp used to evaluate the trigger.
+
+        Returns
+        -------
+        bool
+            True if the job is due at ``now``.
         """
         event = evaluate(self.trigger, now)
         if event is None:
@@ -86,7 +99,18 @@ class Job:
         return event != self.last_event
 
     def run(self, now: datetime) -> object:
-        """Run the job if due, update :attr:`last_event`, and return the result.
+        """
+        Run the job if due, update :attr:`last_event`, and return the result.
+
+        Parameters
+        ----------
+        now : datetime
+            Timestamp used to evaluate the trigger.
+
+        Returns
+        -------
+        object
+            The callable's return value.
 
         Raises
         ------
@@ -110,7 +134,8 @@ class Job:
         *,
         max_iterations: int = 100_000,
     ) -> datetime | None:
-        """Return the next run datetime for this job.
+        """
+        Return the next run datetime for this job.
 
         This is derived from the trigger's next validity window.
 
@@ -119,8 +144,14 @@ class Job:
         after : datetime, optional
             Lower bound (inclusive) for the computed next run time. If omitted,
             uses the current system time.
-        max_iterations:
+        max_iterations : int, default 100_000
             Safety cap used by some triggers/combinators that scan forward.
+
+        Returns
+        -------
+        datetime | None
+            The earliest datetime at which this job is due, or :obj:`None` if the
+            trigger tree cannot produce a next window.
         """
         if after is None:
             after = datetime.now()

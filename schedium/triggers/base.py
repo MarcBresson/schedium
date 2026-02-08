@@ -99,7 +99,8 @@ def _scan_next_match_start(
 
 
 class BaseTrigger:
-    """Base trigger node.
+    """
+    Base trigger node.
 
     Triggers are pure (no mutation). Deduplication is handled at job level via
     the returned `TriggerEvent.token`.
@@ -126,7 +127,8 @@ class BaseTrigger:
         *,
         max_iterations: int = 100_000,
     ) -> TimeWindow | None:
-        """Return the next validity window whose start is >= ``after``.
+        """
+        Return the next validity window whose start is >= ``after``.
 
         For most constraint-style triggers, the default implementation:
 
@@ -135,6 +137,25 @@ class BaseTrigger:
         2) returns a single-bucket window at that granularity.
 
         Tick sources and multi-bucket constraints typically override this.
+
+        Parameters
+        ----------
+        after : datetime
+            Lower bound (inclusive) for the returned window start.
+        max_iterations : int, default 100_000
+            Safety cap used by some triggers/combinators that scan forward.
+
+        Returns
+        -------
+        schedium.utils.window.TimeWindow | None
+            Next validity window, or :obj:`None` if no future window exists.
+
+        Raises
+        ------
+        ValueError
+            If ``max_iterations <= 0``.
+        schedium.exceptions.NextRunMaxIterationsReached
+            If a forward scan exceeds ``max_iterations``.
         """
 
         if max_iterations <= 0:

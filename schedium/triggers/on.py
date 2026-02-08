@@ -13,7 +13,8 @@ from schedium.utils.window import TimeWindow
 
 
 class On(BaseTrigger):
-    """Constraint trigger that matches when a datetime falls *on* a specific value.
+    """
+    Constraint trigger that matches when a datetime falls *on* a specific value.
 
     `On` is a **constraint**: it filters time, but does not define a cadence by
     itself. To schedule a job, combine it with a tick source such as
@@ -140,14 +141,14 @@ class On(BaseTrigger):
             if after.year > self.value:
                 return None
 
-            start_dt = (
+            start_dt_year = (
                 after
                 if self.matches(after)
                 else datetime(self.value, 1, 1, tzinfo=after.tzinfo)
             )
             end_exclusive = datetime(self.value + 1, 1, 1, tzinfo=after.tzinfo)
             return TimeWindow(
-                start=start_dt, end=end_exclusive - timedelta(microseconds=1)
+                start=start_dt_year, end=end_exclusive - timedelta(microseconds=1)
             )
 
         granularity = self.granularity
