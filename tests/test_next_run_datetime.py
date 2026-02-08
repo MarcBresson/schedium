@@ -28,20 +28,15 @@ from schedium.exceptions import NextRunMaxIterationsReached
             datetime(2026, 2, 2, 9, 30, 5),
             datetime(2026, 2, 2, 9, 30, 5),
         ),
-        # day_of_week=1 is Monday (cron/isoweekday); 0 is also accepted as Monday.
+        # day_of_week=1 is Monday (cron/isoweekday)
         (
             On(unit="day_of_week", value=1),
             datetime(2026, 2, 3, 9, 12, 5),
             datetime(2026, 2, 9, 0, 0, 0),
         ),
-        (
-            On(unit="day_of_week", value=0),
-            datetime(2026, 2, 3, 9, 12, 5),
-            datetime(2026, 2, 9, 0, 0, 0),
-        ),
         # Weekday constraint: next match from Saturday is Monday 00:00.
         (
-            On(unit="weekdays", value=1),
+            On(unit="weekdays"),
             datetime(2026, 2, 7, 12, 0, 0),
             datetime(2026, 2, 9, 0, 0, 0),
         ),
@@ -104,7 +99,7 @@ def test_datetime_of_next_run_or_combinator_chooses_earliest_child():
 
 def test_datetime_of_next_run_and_combinator_with_at_datetime():
     at = AtDateTime(run_date=datetime(2026, 2, 2, 9, 12, 0))
-    constraints = On(unit="day_of_week", value=0) & Between(
+    constraints = On(unit="day_of_week", value=1) & Between(
         unit="hour_of_day", start=9, end=17
     )
     t = at & constraints

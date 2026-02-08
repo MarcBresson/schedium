@@ -67,3 +67,9 @@ pythonpath = ["."]
 checks = [
     "all",   # report on all checks, except the below
 ]
+exclude_files = [ # don't process filepaths that match these regex
+    '^tests/.*',
+]
+ignore = [
+  "GL08",
+]

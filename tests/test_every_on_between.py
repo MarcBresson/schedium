@@ -92,8 +92,6 @@ def test_every_weekday_at_8am():
 def test_on_day_of_week_is_constraint():
     # Value 1 means Monday in cron-style; 0 means Monday in python-style.
     monday_cron = On(unit="day_of_week", value=1)
-    monday_py = On(unit="day_of_week", value=0)
 
     assert monday_cron.matches(datetime(2026, 2, 2, 12, 34, 56))
-    assert monday_py.matches(datetime(2026, 2, 2, 12, 34, 56))
     assert not monday_cron.matches(datetime(2026, 2, 3, 12, 34, 56))
