@@ -20,7 +20,7 @@ class On(BaseTrigger):
     def fallback_granularity(self) -> Granularity:
         return self.granularity
 
-    def matches(self, now: datetime) -> bool:
+    def matches(self, now: datetime) -> bool:  # pyright: ignore[reportReturnType]
         if self.unit == "weekdays":
             return now.weekday() < 5
         if self.unit == "weekend_days":
