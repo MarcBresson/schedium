@@ -1,4 +1,4 @@
-API: Job
+API reference: Job
 ========
 
 .. autoclass:: schedium.job.Job

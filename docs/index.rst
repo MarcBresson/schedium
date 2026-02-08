@@ -20,7 +20,7 @@ Quick start
    def hello() -> None:
        print("hello")
 
-   print_hello_job = Job(hello, Every(unit="minute", interval=1), name="hello")
+   print_hello_job = Job(hello, Every(unit="minute", interval=5), name="hello")
    sched.append(print_hello_job)
 
    while True:
