@@ -28,13 +28,13 @@ class Job:
 
     Parameters
     ----------
-    func:
+    func : Callable[[], object]
         A zero-argument callable. The return value is returned by
         :meth:`run` and by :meth:`schedium.scheduler.Scheduler.run_pending`.
         If you need to pass arguments, wrap them in a closure or `functools.partial`.
-    trigger:
+    trigger : BaseTrigger
         The trigger that decides when this job is due.
-    name:
+    name : str, default: None
         Optional human-readable label used in `repr(job)`.
 
     Notes
@@ -64,7 +64,6 @@ class Job:
         trigger: BaseTrigger,
         name: str | None = None,
     ):
-        """Create a new job."""
         self.func = func
         self.trigger = trigger
         self.name = name
