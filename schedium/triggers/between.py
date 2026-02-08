@@ -58,16 +58,10 @@ class Between(BaseTrigger):
         elif self.unit == "week_of_year":
             v = now.isocalendar().week
         elif self.unit == "day_of_week":
-            if self.start == 0 or self.end == 0:
-                if not (0 <= self.start <= 6 and 0 <= self.end <= 6):
-                    raise ValueError(
-                        "day_of_week range must use 0..6 (python) or 1..7 (cron), consistently"
-                    )
-                return self.start <= now.weekday() <= self.end
             if 1 <= self.start <= 7 and 1 <= self.end <= 7:
                 return self.start <= now.isoweekday() <= self.end
             raise ValueError(
-                "day_of_week range must use 0..6 (python) or 1..7 (cron), consistently"
+                "day_of_week range must use 1..7 (Monday..Sunday), consistently"
             )
         elif self.unit == "day_of_month":
             v = now.day
