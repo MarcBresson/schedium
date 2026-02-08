@@ -2,27 +2,18 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta, timezone, tzinfo
-from typing import Literal
 
-from schedium.triggers.base import (
-    BaseTrigger,
+from schedium.schemas.granularity import (
+    GRANULARITY_TO_UNIT_MAP,
+    UNIT_TO_GRANULARITY_MAP,
     Granularity,
+    GranularityUnit,
 )
+from schedium.triggers.base import BaseTrigger
 from schedium.utils.since_epoch import since_epoch
 from schedium.utils.truncate_to_granularity import truncate
 
 logger = logging.getLogger(__name__)
-
-UNIT_TO_GRANULARITY_MAP = {
-    "year": Granularity.YEAR,
-    "month": Granularity.MONTH,
-    "week": Granularity.WEEK,
-    "day": Granularity.DAY,
-    "hour": Granularity.HOUR,
-    "minute": Granularity.MINUTE,
-    "second": Granularity.SECOND,
-    "millisecond": Granularity.MILLISECOND,
-}
 
 
 def datetime_from_since_epoch(
@@ -59,16 +50,7 @@ def datetime_from_since_epoch(
 class Every(BaseTrigger):
     def __init__(
         self,
-        unit: Literal[
-            "year",
-            "month",
-            "week",
-            "day",
-            "hour",
-            "minute",
-            "second",
-            "millisecond",
-        ],
+        unit: GranularityUnit,
         interval: int,
         offset: int = 0,
         auto_offset: bool = False,
@@ -84,7 +66,7 @@ class Every(BaseTrigger):
                 unit,
             )
 
-        self.unit = unit
+        self.granularity = UNIT_TO_GRANULARITY_MAP[unit]
         self.interval = interval
         self.offset = offset
 
@@ -94,7 +76,7 @@ class Every(BaseTrigger):
             )
 
     def required_granularity(self) -> Granularity:
-        return UNIT_TO_GRANULARITY_MAP[self.unit]
+        return self.granularity
 
     def fallback_granularity(self) -> Granularity:
         return self.required_granularity()
@@ -126,9 +108,7 @@ class Every(BaseTrigger):
         return datetime_from_since_epoch(value, granularity, after.tzinfo)
 
     def __repr__(self) -> str:
-        return (
-            f"Every(unit={self.unit!r}, interval={self.interval}, offset={self.offset})"
-        )
+        return f"Every(unit={GRANULARITY_TO_UNIT_MAP[self.granularity]!r}, interval={self.interval}, offset={self.offset})"
 
 
 def auto_offset_from_now(granularity: Granularity, interval: int) -> int:

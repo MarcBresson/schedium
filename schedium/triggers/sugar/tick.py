@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime
 
-from schedium.schemas.granularity import Granularity
+from schedium.schemas.granularity import (
+    UNIT_TO_GRANULARITY_MAP,
+    Granularity,
+    GranularityUnit,
+)
 from schedium.triggers.base import BaseTrigger
 
 
-@dataclass(frozen=True)
 class Tick(BaseTrigger):
     """A tick source that always matches, but defines the dedup bucket.
 
@@ -35,7 +37,10 @@ class Tick(BaseTrigger):
     advanced compositions.
     """
 
-    granularity: Granularity
+    def __init__(self, granularity: Granularity | GranularityUnit) -> None:
+        if isinstance(granularity, str):
+            granularity = UNIT_TO_GRANULARITY_MAP[granularity]
+        self.granularity = granularity
 
     def required_granularity(self) -> Granularity:
         return self.granularity

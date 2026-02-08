@@ -1,4 +1,5 @@
 from enum import IntEnum
+from typing import Literal, TypeAlias
 
 
 class Granularity(IntEnum):
@@ -16,3 +17,37 @@ class Granularity(IntEnum):
     WEEK = 6
     MONTH = 7
     YEAR = 8
+
+
+UNIT_TO_GRANULARITY_MAP = {
+    "year": Granularity.YEAR,
+    "month": Granularity.MONTH,
+    "week": Granularity.WEEK,
+    "day": Granularity.DAY,
+    "hour": Granularity.HOUR,
+    "minute": Granularity.MINUTE,
+    "second": Granularity.SECOND,
+    "millisecond": Granularity.MILLISECOND,
+}
+
+GRANULARITY_TO_UNIT_MAP = {
+    Granularity.YEAR: "year",
+    Granularity.MONTH: "month",
+    Granularity.WEEK: "week",
+    Granularity.DAY: "day",
+    Granularity.HOUR: "hour",
+    Granularity.MINUTE: "minute",
+    Granularity.SECOND: "second",
+    Granularity.MILLISECOND: "millisecond",
+}
+
+GranularityUnit: TypeAlias = Literal[
+    "year",
+    "month",
+    "week",
+    "day",
+    "hour",
+    "minute",
+    "second",
+    "millisecond",
+]
