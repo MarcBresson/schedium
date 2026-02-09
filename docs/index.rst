@@ -34,6 +34,7 @@ Contents
    :maxdepth: 2
    :caption: Guides
 
+   scheduler <usage/scheduler>
    jobs <usage/jobs>
    triggers <usage/triggers>
 
@@ -47,5 +48,6 @@ Contents
    :maxdepth: 2
    :caption: API Reference
 
+   Scheduler <api/scheduler>
    Job <api/job>
    Triggers <api/triggers/index>

@@ -46,9 +46,9 @@ Use ``&`` to require that *all* conditions are satisfied.
 
    from schedium import Every, On
 
-   # Every day, but only at 08:00
+   # Every 2 weeks, but only at 08:00
    trigger = (
-       Every(unit="day", interval=1)
+       Every(unit="week", interval=2)
        & On(unit="hour_of_day", value=8)
        & On(unit="minute_of_hour", value=0)
    )
@@ -62,12 +62,12 @@ Use ``|`` to allow either branch to match.
 
    from schedium import Every, On
 
-   # Either 08:00 or 17:00
+   # at 08:00 and anytime in the 17th hour every 2 days
    trigger = (
-       Every(unit="day", interval=1)
+       Every(unit="day", interval=2)
        & (
            (On(unit="hour_of_day", value=8) & On(unit="minute_of_hour", value=0))
-           | (On(unit="hour_of_day", value=17) & On(unit="minute_of_hour", value=0))
+           | (On(unit="hour_of_day", value=17))
        )
    )
 
@@ -122,11 +122,32 @@ On (equality constraint)
 :class:`~schedium.triggers.on.On` matches when a datetime field equals a value
 (e.g. hour=8, weekday=Mon).
 
+.. code-block:: python
+
+   from schedium import Every, On
+
+   # Weekdays at 08:00
+   trigger = (
+      Every(unit="day", interval=1)
+      & On(unit="weekdays", value=1)
+      & On(unit="hour_of_day", value=8)
+      & On(unit="minute_of_hour", value=0)
+   )
+
 Between (range constraint)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :class:`~schedium.triggers.between.Between` matches when a datetime field is
 within an inclusive range (e.g. hours 9..17).
+
+.. code-block:: python
+
+   from schedium import Between, Every
+
+   # Every 10 minutes, but only during working hours
+   trigger = Every(unit="minute", interval=10) & Between(
+      unit="hour_of_day", start=9, end=17
+   )
 
 BetweenDateTime (datetime window)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -134,17 +155,55 @@ BetweenDateTime (datetime window)
 :class:`~schedium.triggers.datetime.BetweenDateTime` matches inside a concrete
 inclusive datetime window.
 
+.. code-block:: python
+
+   from datetime import datetime, timezone
+   from schedium import BetweenDateTime, Every
+
+   window = BetweenDateTime(
+      start_date=datetime(2026, 2, 8, 1, 0, tzinfo=timezone.utc),
+      end_date=datetime(2026, 2, 8, 2, 0, tzinfo=timezone.utc),
+   )
+   trigger = Every(unit="minute", interval=1) & window
+
 AtDateTime (one-shot)
 ^^^^^^^^^^^^^^^^^^^^^
 
 :class:`~schedium.triggers.datetime.AtDateTime` fires once at/after a target
 datetime, even if the scheduler starts late.
 
+.. code-block:: python
+
+   from datetime import datetime
+   from schedium import AtDateTime
+
+   trigger = AtDateTime(datetime(2026, 2, 8, 12, 0, 0))
+
 Weekly (helper)
 ^^^^^^^^^^^^^^^
 
 :func:`~schedium.triggers.sugar.weekly.Weekly` is a convenience helper that
 builds a composed trigger for “weekly on weekday X, optionally at HH:MM”.
+
+.. code-block:: python
+
+   from schedium import Weekly
+
+   trigger = Weekly("mon", at="09:30")
+
+Combinators (AndTrigger / OrTrigger)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Although you will typically compose triggers using ``&`` and ``|``, schedium
+also exposes :class:`~schedium.triggers.AndTrigger` and
+:class:`~schedium.triggers.OrTrigger`.
+
+.. code-block:: python
+
+   from schedium import Every, On
+
+   # Equivalent to: AndTrigger([Every(...), On(...)])
+   trigger = Every(unit="day", interval=1) & On(unit="hour_of_day", value=8)
 
 API reference
 -------------
