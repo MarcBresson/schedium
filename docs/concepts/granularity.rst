@@ -69,6 +69,8 @@ A job runs at most once per token. If you call
 returning :obj:`schedium.scheduler.DidNotRun` for that job until the token
 changes (i.e., the bucket changes).
 
+.. _effective-granularity:
+
 Effective granularity
 ^^^^^^^^^^^^^^^^^^^^^
 
