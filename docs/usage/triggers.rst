@@ -35,7 +35,7 @@ If you try to schedule a constraint-only trigger tree, :meth:`~schedium.schedule
 raises ``ValueError``.
 
 Composing triggers (AND / OR)
-----------------------------
+-----------------------------
 
 AND (intersection)
 ^^^^^^^^^^^^^^^^^^
