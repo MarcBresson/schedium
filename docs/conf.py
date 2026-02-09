@@ -11,6 +11,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(DOCS_DIR, ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
+html_title = "Schedium"
 project = "schedium"
 author = "Marc Bresson"
 copyright = f"{date.today().year}, {author}"
@@ -39,7 +40,6 @@ html_static_path = ["_static"]
 html_logo = "logo.svg"
 html_favicon = "favicon.svg"
 html_theme_options = {
-    "sidebar_hide_name": True,
     "footer_icons": [
         {
             "name": "GitHub",
