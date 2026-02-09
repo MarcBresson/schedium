@@ -64,6 +64,13 @@ html_show_sourcelink = False
 autodoc_member_order = "bysource"
 autodoc_typehints = "description"
 
+# open-graph
+ogp_site_url = "https://schedium.readthedocs.io"
+ogp_image = "https://raw.githubusercontent.com/MarcBresson/schedium/main/docs/logo.png"
+ogp_social_cards = {
+    "image": "logo.png",
+}
+
 
 def linkcode_resolve(domain, info):
     # print(f"domain={domain}, info={info}")
