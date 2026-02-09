@@ -115,10 +115,10 @@ On (equality constraint)
 
    from schedium import Every, On
 
-   # Every 2 weekdays at 08:00
+   # Every day, on weekdays at 08:00
    trigger = (
-      Every(unit="day", interval=2)
-      & On(unit="weekdays", value=1)
+      Every(unit="day", interval=1)
+      & On(unit="weekdays")
       & On(unit="hour_of_day", value=8)
       & On(unit="minute_of_hour", value=0)
    )

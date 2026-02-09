@@ -68,7 +68,7 @@ class On(BaseTrigger):
     >>> from schedium import Every, On
     >>> trigger = (
     ...     Every(unit="day", interval=1)
-    ...     & On(unit="weekdays", value=1)
+    ...     & On(unit="weekdays")
     ...     & On(unit="hour_of_day", value=8)
     ...     & On(unit="minute_of_hour", value=0)
     ... )

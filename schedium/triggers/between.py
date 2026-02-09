@@ -195,9 +195,6 @@ class Between(BaseTrigger):
 
         # Expand to the end of the contiguous matching region by stepping buckets.
         bucket = truncate(start_dt, granularity)
-        if not self.matches(bucket):
-            # Safety: if we landed inside a matching bucket, normalize.
-            bucket = truncate(start_dt, granularity)
 
         next_bucket = _increment(bucket, granularity)
         steps = 0

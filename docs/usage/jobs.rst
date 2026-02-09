@@ -122,7 +122,7 @@ In normal usage you should call ``Scheduler.run_pending(...)`` instead of callin
 API reference
 -------------
 
-full API reference for :class:`~schedium.job.Job` avaible in :doc:`/api/job <../api/job>`.
+full API reference for :class:`~schedium.job.Job` available in :doc:`/api/job <../api/job>`.
 
 .. autoclass:: schedium.job.Job
    :no-index:

@@ -13,6 +13,7 @@ from .triggers import (
     OrTrigger,
     Weekly,
 )
+from .triggers.sugar.tick import Tick
 
 __all__ = [
     "AndTrigger",
@@ -25,5 +26,6 @@ __all__ = [
     "On",
     "OrTrigger",
     "Scheduler",
+    "Tick",
     "Weekly",
 ]

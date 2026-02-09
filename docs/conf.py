@@ -72,8 +72,6 @@ def linkcode_resolve(domain, info):
     if not info["module"]:
         return None
     filename = quote(info["module"].replace(".", "/"))
-    if not filename.startswith("tests"):
-        filename = "src/" + filename
     if "fullname" in info:
         anchor = info["fullname"]
         anchor = "#:~:text=" + quote(anchor.split(".")[-1])

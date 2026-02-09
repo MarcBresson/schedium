@@ -64,7 +64,7 @@ def test_every_hour_between_9_17_on_minute_55():
 def test_every_weekday_at_8am():
     trigger = (
         Every(unit="day", interval=1)
-        & On(unit="weekdays", value=1)
+        & On(unit="weekdays")
         & On(unit="hour_of_day", value=8)
     )
 
@@ -90,7 +90,7 @@ def test_every_weekday_at_8am():
 
 
 def test_on_day_of_week_is_constraint():
-    # Value 1 means Monday in cron-style; 0 means Monday in python-style.
+    # Value 1 means Monday in ISO weekday numbering (1=Mon, 7=Sun).
     monday_cron = On(unit="day_of_week", value=1)
 
     assert monday_cron.matches(datetime(2026, 2, 2, 12, 34, 56))

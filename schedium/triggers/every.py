@@ -21,16 +21,12 @@ def datetime_from_since_epoch(
 ) -> datetime:
     epoch = datetime(1970, 1, 1, tzinfo=tzinfo)
     if granularity == Granularity.MILLISECOND:
-        epoch = epoch
         return epoch + timedelta(milliseconds=value)
     if granularity == Granularity.SECOND:
-        epoch = epoch
         return epoch + timedelta(seconds=value)
     if granularity == Granularity.MINUTE:
-        epoch = epoch
         return epoch + timedelta(minutes=value)
     if granularity == Granularity.HOUR:
-        epoch = epoch
         return epoch + timedelta(hours=value)
     if granularity == Granularity.DAY:
         d = epoch + timedelta(days=value)

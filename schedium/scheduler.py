@@ -56,7 +56,7 @@ class Scheduler:
     >>> from schedium import On
     >>> weekday_8am = (
     ...     Every(unit="day", interval=1)
-    ...     & On(unit="weekdays", value=1)
+    ...     & On(unit="weekdays")
     ...     & On(unit="hour_of_day", value=8)
     ... )
     >>> sched = Scheduler()

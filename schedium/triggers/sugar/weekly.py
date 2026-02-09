@@ -53,13 +53,6 @@ def _parse_at(at: str | time) -> tuple[int, int, int | None, int | None]:
             "at must be in format 'HH:MM' or 'HH:MM:SS' (optionally with .mmm)"
         )
 
-    s = at.strip()
-    parts = s.split(":")
-    if len(parts) not in (2, 3):
-        raise ValueError(
-            "at must be in format 'HH:MM' or 'HH:MM:SS' (optionally with .mmm)"
-        )
-
     try:
         hour = int(parts[0])
         minute = int(parts[1])
