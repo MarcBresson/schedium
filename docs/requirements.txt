@@ -2,3 +2,4 @@ sphinx>=7
 furo>=2025.12.19
 numpydoc>=1.10.0
 sphinx_copybutton>=0.5.2
+sphinxext-opengraph[social_cards]>=0.13.0
