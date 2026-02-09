@@ -9,7 +9,7 @@ In schedium, triggers are designed to be composed:
 - AND it with one or more **constraints** to narrow down the times you want.
 
 Tick sources vs constraints
---------------------------
+---------------------------
 
 Tick sources
 ^^^^^^^^^^^^

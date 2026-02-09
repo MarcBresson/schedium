@@ -43,7 +43,7 @@ Effective granularity
 ---------------------
 
 Bucket tokens require a granularity. schedium picks an **effective granularity**
-from the trigger tree. See :ref:`concepts/granularity` for details.
+from the trigger tree. See :doc:`concepts/granularity` for details.
 
 Why this matters in practice
 ----------------------------
