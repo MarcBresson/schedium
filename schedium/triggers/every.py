@@ -49,9 +49,9 @@ def datetime_from_since_epoch(
 
 class Every(BaseTrigger):
     """
-    Tick-source trigger that matches on a fixed cadence.
+    Trigger that matches on a fixed cadence.
 
-    `Every` is a **tick source**: it defines *when time advances* for a schedule.
+    `Every` defines *when time advances* for a schedule.
     When it matches, the scheduler may run the job (subject to deduplication and
     any additional constraints).
 
@@ -106,6 +106,15 @@ class Every(BaseTrigger):
         When ``interval=1``, `Every` matches every bucket. The project logs a
         warning suggesting :class:`~schedium.triggers.sugar.tick.Tick` instead,
         which is often clearer for “always match, but dedup by granularity”.
+
+    Every vs Tick
+        Even though both ``Every(unit=..., interval=1)`` and ``Tick(...)`` match
+        for all ``now``, they differ in their notion of “next time”. For example,
+        for ``after=10:00:30``:
+
+        - ``Tick("minute").next_window(after)`` starts at ``10:00:30``.
+        - ``Every("minute", interval=1).next_window(after)`` starts at the next
+            epoch-aligned boundary (typically ``10:01:00``).
 
     Timezones
         `since_epoch(...)` uses the provided ``datetime``. If you use timezone-

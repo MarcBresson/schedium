@@ -125,12 +125,10 @@ def Weekly(
 
     Notes
     -----
-    This helper composes a *tick source* with *constraints*:
+    This helper composes triggers to express a weekly schedule.
 
-    - Tick source: `Tick(Granularity.WEEK)`
-        - Always matches, but provides a WEEK "bucket" for deduplication.
-        - This makes the trigger schedulable without imposing a cadence.
-    - Constraints: `On(day_of_week=...)` and, if `at` is provided, hour/minute
+    - `Tick(Granularity.WEEK)` provides a WEEK "bucket" for deduplication.
+    - `On(day_of_week=...)` and, if `at` is provided, hour/minute
         (and optionally second/millisecond).
 
     Using `Tick(WEEK)` (instead of `Every(unit="week", interval=1)`) avoids forcing

@@ -11,9 +11,7 @@ class BetweenDateTime(BaseTrigger):
     Constraint trigger that matches within an inclusive datetime window.
 
     `BetweenDateTime` is a **constraint**: it filters time but does not define a
-    cadence by itself. To schedule a job, combine it with a tick source such as
-    :class:`~schedium.triggers.every.Every`, :class:`~schedium.triggers.sugar.tick.Tick`,
-    or :class:`~schedium.triggers.datetime.AtDateTime`.
+    cadence by itself.
 
     Parameters
     ----------
@@ -90,11 +88,11 @@ class BetweenDateTime(BaseTrigger):
 
 class AtDateTime(BaseTrigger):
     """
-    One-shot tick-source trigger that fires at/after a specific datetime.
+    One-shot trigger that fires at/after a specific datetime.
 
     `AtDateTime` matches when ``now >= run_date``.
 
-    Unlike cadence-based tick sources (like :class:`~schedium.triggers.every.Every`),
+    Unlike cadence-based triggers (like :class:`~schedium.triggers.every.Every`),
     `AtDateTime` is intended for **one-shot** schedules. It is also safe if the
     scheduler starts late: the first evaluation after ``run_date`` will match,
     and deduplication ensures it runs only once.

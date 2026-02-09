@@ -19,9 +19,6 @@ class Between(BaseTrigger):
     Constraint trigger that matches when a datetime field is within a range.
 
     `Between` is a **constraint**: it filters time, but does not define a cadence.
-    To schedule a job, combine it with a tick source such as
-    :class:`~schedium.triggers.every.Every`, :class:`~schedium.triggers.sugar.tick.Tick`,
-    or :class:`~schedium.triggers.datetime.AtDateTime`.
 
     Parameters
     ----------

@@ -13,7 +13,7 @@ Creating a job
 A job takes:
 
 - ``func``: a zero-argument callable
-- ``trigger``: a trigger tree (often an ``Every(...)`` tick source AND-ed with constraints)
+- ``trigger``: a trigger tree
 - ``name``: an optional label used in ``repr(job)``
 
 .. code-block:: python
@@ -85,21 +85,6 @@ This means:
 - Calling ``Scheduler.run_pending`` many times per second is safe.
 - A job runs at most once per bucket for its trigger.
 
-Tick sources vs constraints (important)
-
-Many triggers are **constraints** (they only filter time), for example:
-
-- ``On(unit="hour_of_day", value=8)``
-- ``Between(unit="hour_of_day", start=9, end=17)``
-- ``BetweenDateTime(start_date=..., end_date=...)``
-
-A constraint alone doesn't define a cadence. To be schedulable, a job must include a
-**tick source**, such as:
-
-- ``Every(unit=..., interval=...)``
-- ``Tick(granularity=...)`` (advanced)
-- ``AtDateTime(...)`` (one-shot)
-
 Example: every minute, but only during working hours
 
 .. code-block:: python
@@ -116,9 +101,6 @@ Example: every minute, but only during working hours
    trigger = Every(unit="minute", interval=1) & Between(unit="hour_of_day", start=9, end=17)
 
    sched.append(Job(work_hours_task, trigger, name="work-hours"))
-
-If you try to schedule a constraint-only trigger, ``Scheduler.append(...)`` raises
-``ValueError`` to prevent surprising behavior.
 
 Return values
 -------------

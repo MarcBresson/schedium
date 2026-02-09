@@ -81,9 +81,7 @@ The effective granularity is derived from the trigger tree (see
   required granularity.
 - Otherwise it uses the **finest** ``fallback_granularity()``.
 
-Tick sources (like :class:`~schedium.triggers.every.Every` and
-:class:`~schedium.triggers.sugar.tick.Tick`) typically define the effective
-granularity for the entire schedule.
+Some triggers typically define the effective granularity for the entire schedule.
 
 Special case: EXACT and AtDateTime
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -105,8 +103,8 @@ inferred granularity to:
 1. scan forward to the next matching bucket boundary, and
 2. return a window covering exactly that bucket.
 
-This is why choosing a tick source granularity matters: it affects both
-**deduplication** and how quickly some AND-combinations converge when scanning.
+This is why choosing a granularity matters: it affects both **deduplication**
+and how quickly some AND-combinations converge when scanning.
 
 Practical guidance
 ------------------

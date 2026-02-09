@@ -29,7 +29,9 @@ def _effective_granularity(trigger: BaseTrigger) -> Granularity:
     walk(trigger)
     if required:
         return min(required)
-    return min(fallback)
+    if fallback:
+        return min(fallback)
+    return Granularity.SECOND
 
 
 def evaluate(trigger: BaseTrigger, now: datetime) -> TriggerEvent | None:

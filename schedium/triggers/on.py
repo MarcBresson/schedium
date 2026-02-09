@@ -17,9 +17,7 @@ class On(BaseTrigger):
     Constraint trigger that matches when a datetime falls *on* a specific value.
 
     `On` is a **constraint**: it filters time, but does not define a cadence by
-    itself. To schedule a job, combine it with a tick source such as
-    :class:`~schedium.triggers.every.Every`, :class:`~schedium.triggers.sugar.tick.Tick`,
-    or :class:`~schedium.triggers.datetime.AtDateTime`.
+    itself.
 
     Parameters
     ----------
@@ -50,10 +48,9 @@ class On(BaseTrigger):
 
     Notes
     -----
-    Tick source requirement
-        `On` does not generate time buckets on its own. If you attempt to append
-        a constraint-only trigger tree to :class:`~schedium.scheduler.Scheduler`,
-        :meth:`~schedium.scheduler.Scheduler.append` raises ``ValueError``.
+    Scheduling notes
+        `On` may match for an extended interval (for example, an entire hour or
+        day), so jobs should rely on deduplication to avoid repeated runs.
 
     Day-of-week semantics
         `On` uses **iso-style** day-of-week numbering (1..7) via

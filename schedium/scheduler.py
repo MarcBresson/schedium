@@ -3,23 +3,6 @@ from __future__ import annotations
 from datetime import datetime
 
 from schedium.job import Job
-from schedium.triggers import (
-    AtDateTime,
-    BaseCombinatorTrigger,
-    BaseTrigger,
-    Every,
-)
-
-
-def _has_tick_source(trigger: BaseTrigger) -> bool:
-    from schedium.triggers.sugar.tick import Tick
-
-    if isinstance(trigger, (Every, Tick, AtDateTime)):
-        return True
-    if isinstance(trigger, BaseCombinatorTrigger):
-        return any(_has_tick_source(t) for t in trigger.triggers)
-    return False
-
 
 DidNotRun = object()
 
@@ -36,13 +19,13 @@ class Scheduler:
       times within the same trigger "token" (e.g., the same minute bucket), the
       job runs only once.
 
-        Notes
-        -----
-        - :meth:`run_pending` returns a list aligned with :attr:`jobs`. For jobs that
-            are not due, the entry is the sentinel :obj:`DidNotRun`.
-        - Many triggers match only at specific boundaries (minute/hour/day). In
-            production, call :meth:`run_pending` on a short interval (e.g., once per
-            second) so you don't skip over a matching boundary.
+    Notes
+    -----
+    - :meth:`run_pending` returns a list aligned with :attr:`jobs`. For jobs that
+        are not due, the entry is the sentinel :obj:`DidNotRun`.
+    - Many triggers match only at specific boundaries (minute/hour/day). In
+        production, call :meth:`run_pending` on a short interval (e.g., once per
+        second) so you don't skip over a matching boundary.
 
     Examples
     --------
@@ -100,20 +83,10 @@ class Scheduler:
 
         Parameters
         ----------
-        job : schedium.job.Job
-            Job to append.
-
-        Raises
-        ------
-        ValueError
-            If the job's trigger tree contains no tick source.
+        job : Job
+            The job to append. The job's trigger is used to determine when it runs.
         """
-        if not _has_tick_source(job.trigger):
-            raise ValueError(
-                "Trigger is not schedulable without a tick source. "
-                "Combine constraints (On/Between/BetweenDateTime) with a tick source "
-                "like Every(...), Tick(...), or AtDateTime(...)."
-            )
+
         self.jobs.append(job)
 
     def __getitem__(self, item):
@@ -135,6 +108,7 @@ class Scheduler:
             The list of return values from each job. If a job is not due, its
             return value is :obj:`DidNotRun`.
         """
+
         now_dt = now if now is not None else datetime.now()
         results: list[object] = []
         for job in list(self.jobs):
@@ -154,9 +128,7 @@ class Scheduler:
         Return the earliest next run time across all jobs.
 
         This asks each job's trigger for its next run time and returns the
-        minimum. Triggers that cannot compute a next time (for example,
-        constraint-only triggers that require an external tick source) are
-        ignored.
+        minimum. Triggers that cannot compute a next time are ignored.
 
         Parameters
         ----------

@@ -5,34 +5,9 @@ A **trigger** determines *when* a :class:`~schedium.job.Job` is due.
 
 In schedium, triggers are designed to be composed:
 
-- Use a **tick source** to define a cadence (or at least a deduplication bucket).
-- AND it with one or more **constraints** to narrow down the times you want.
-
-Tick sources vs constraints
----------------------------
-
-Tick sources
-^^^^^^^^^^^^
-
-A **tick source** makes a trigger tree schedulable by defining how time advances.
-Common tick sources are:
-
-- :class:`~schedium.triggers.every.Every` (epoch-aligned cadence)
-- :class:`~schedium.triggers.sugar.tick.Tick` (always matches, but caps runs by bucket)
-- :class:`~schedium.triggers.datetime.AtDateTime` (one-shot)
-
-Constraints
-^^^^^^^^^^^
-
-A **constraint** filters time but does not define a cadence by itself.
-Examples:
-
-- :class:`~schedium.triggers.on.On` ("hour is 8")
-- :class:`~schedium.triggers.between.Between` ("hour between 9 and 17")
-- :class:`~schedium.triggers.datetime.BetweenDateTime` ("inside this datetime window")
-
-If you try to schedule a constraint-only trigger tree, :meth:`~schedium.scheduler.Scheduler.append`
-raises ``ValueError``.
+- Compose triggers to express a schedule.
+- Use ``&`` to narrow matching times.
+- Use ``|`` to express alternatives.
 
 Composing triggers (AND / OR)
 -----------------------------
@@ -88,6 +63,20 @@ See the Concepts pages for details:
 Trigger overview
 ----------------
 
+Every vs Tick
+^^^^^^^^^^^^^
+
+Every(...) controls when a job becomes due, and how often it can run.
+Tick(...) doesn’t control when; it only controls how often at most it can run (once per bucket)
+when other parts of the trigger tree make it match.
+
+They can both appear similar when polling ``Scheduler.run_pending(...)`` frequently, but
+they differ in “next time” semantics. For example, for ``after=10:00:30``:
+
+- ``Tick("minute").next_window(after)`` starts at ``10:00:30``.
+- ``Every("minute", interval=1).next_window(after)`` starts at the next epoch-aligned
+   boundary (typically ``10:01:00``).
+
 Every (cadence)
 ^^^^^^^^^^^^^^^
 
@@ -126,9 +115,9 @@ On (equality constraint)
 
    from schedium import Every, On
 
-   # Weekdays at 08:00
+   # Every 2 weekdays at 08:00
    trigger = (
-      Every(unit="day", interval=1)
+      Every(unit="day", interval=2)
       & On(unit="weekdays", value=1)
       & On(unit="hour_of_day", value=8)
       & On(unit="minute_of_hour", value=0)

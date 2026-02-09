@@ -13,18 +13,18 @@ from schedium.utils.window import TimeWindow
 
 class Tick(BaseTrigger):
     """
-    A tick source that always matches, but defines the dedup bucket.
+    A trigger that always matches, but defines the dedup bucket.
 
-    In this project, a *tick source* is required for a trigger to be schedulable
-    (see `Scheduler.append(...)`). Many triggers (like `On(...)` / `Between(...)`) are
-    *constraints* and do not generate ticks on their own.
+    Tick(...) doesn’t control when; it controls how often at most it can run (once per bucket)
+    when other parts of the trigger tree make it match.
 
-    `Tick` differs from `Every`:
+    Even though both ``Every(unit=..., interval=1)`` and ``Tick(...)`` match for
+    all ``now``, they differ in their notion of “next time”. For example, for
+    ``after=10:00:30``:
 
-    - `Every(unit=..., interval=...)` is a *real cadence*: it only matches at
-        specific aligned instants derived from epoch math.
-    - `Tick(granularity=...)` is a *bucket limiter*: it matches at any `now`, but
-        causes deduplication to happen at the given granularity via `evaluate(...)`.
+    - ``Tick("minute").next_window(after)`` starts at ``10:00:30``.
+    - ``Every("minute", interval=1).next_window(after)`` starts at the next
+        epoch-aligned boundary (typically ``10:01:00``).
 
     Why this is useful:
 

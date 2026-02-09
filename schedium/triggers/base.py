@@ -136,8 +136,6 @@ class BaseTrigger:
            granularity, then
         2) returns a single-bucket window at that granularity.
 
-        Tick sources and multi-bucket constraints typically override this.
-
         Parameters
         ----------
         after : datetime

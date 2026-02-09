@@ -52,19 +52,6 @@ in :class:`~schedium.triggers.base.BaseTrigger`:
 Example: ``On(unit="hour_of_day", value=9)`` returns a window covering the rest of
 that hour once it finds the next matching hour.
 
-Tick sources and constraints
-----------------------------
-
-In schedium, a schedulable trigger tree must contain a **tick source**
-(e.g. :class:`~schedium.triggers.every.Every`,
-:class:`~schedium.triggers.sugar.tick.Tick`, or
-:class:`~schedium.triggers.datetime.AtDateTime`).
-
-Constraints like :class:`~schedium.triggers.on.On`,
-:class:`~schedium.triggers.between.Between`, and
-:class:`~schedium.triggers.datetime.BetweenDateTime` filter time but do not
-create a cadence.
-
 Combinators (AND / OR)
 ----------------------
 
