@@ -1,11 +1,18 @@
-schedium
+Schedium
 ===========
 
-schedium is a small in-process scheduler.
+Schedium is a small in-process scheduler.
 
 - You register **jobs** (a callable + a trigger).
 - You call ``Scheduler.run_pending(...)`` periodically.
 - Jobs run inline and are **deduplicated** per trigger token, i.e., they won't run more than once for the same trigger event.
+
+Installation
+------------
+
+.. code-block:: bash
+
+   pip install schedium
 
 Quick start
 -----------
