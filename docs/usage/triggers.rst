@@ -9,57 +9,6 @@ In schedium, triggers are designed to be composed:
 - Use ``&`` to narrow matching times.
 - Use ``|`` to express alternatives.
 
-Composing triggers (AND / OR)
------------------------------
-
-AND (intersection)
-^^^^^^^^^^^^^^^^^^
-
-Use ``&`` to require that *all* conditions are satisfied.
-
-.. code-block:: python
-
-   from schedium import Every, On
-
-   # Every 2 weeks, but only at 08:00
-   trigger = (
-       Every(unit="week", interval=2)
-       & On(unit="hour_of_day", value=8)
-       & On(unit="minute_of_hour", value=0)
-   )
-
-OR (alternatives)
-^^^^^^^^^^^^^^^^^
-
-Use ``|`` to allow either branch to match.
-
-.. code-block:: python
-
-   from schedium import Every, On
-
-   # at 08:00 and anytime in the 17th hour every 2 days
-   trigger = (
-       Every(unit="day", interval=2)
-       & (
-           (On(unit="hour_of_day", value=8) & On(unit="minute_of_hour", value=0))
-           | (On(unit="hour_of_day", value=17))
-       )
-   )
-
-How “next time” is computed
----------------------------
-
-schedium computes future schedules using window time:
-
-- Each trigger implements ``next_window(after) -> TimeWindow | None``.
-- A job’s next run time is ``window.start``.
-
-See the Concepts pages for details:
-
-- :doc:`Window time <../concepts/window_time>`
-- :doc:`Trigger tokens & deduplication <../concepts/trigger_tokens>`
-- :doc:`Granularity <../concepts/granularity>`
-
 Trigger overview
 ----------------
 
@@ -180,8 +129,8 @@ builds a composed trigger for “weekly on weekday X, optionally at HH:MM”.
 
    trigger = Weekly("mon", at="09:30")
 
-Combinators (AndTrigger / OrTrigger)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Composing triggers (AND / OR)
+-----------------------------
 
 Although you will typically compose triggers using ``&`` and ``|``, schedium
 also exposes :class:`~schedium.triggers.AndTrigger` and
@@ -193,6 +142,54 @@ also exposes :class:`~schedium.triggers.AndTrigger` and
 
    # Equivalent to: AndTrigger([Every(...), On(...)])
    trigger = Every(unit="day", interval=1) & On(unit="hour_of_day", value=8)
+
+AND (intersection)
+^^^^^^^^^^^^^^^^^^
+
+Use ``&`` to require that *all* conditions are satisfied.
+
+.. code-block:: python
+
+   from schedium import Every, On
+
+   # Every 2 weeks, but only at 08:00
+   trigger = (
+       Every(unit="week", interval=2)
+       & On(unit="hour_of_day", value=8)
+       & On(unit="minute_of_hour", value=0)
+   )
+
+OR (alternatives)
+^^^^^^^^^^^^^^^^^
+
+Use ``|`` to allow either branch to match.
+
+.. code-block:: python
+
+   from schedium import Every, On
+
+   # at 08:00 and anytime in the 17th hour every 2 days
+   trigger = (
+       Every(unit="day", interval=2)
+       & (
+           (On(unit="hour_of_day", value=8) & On(unit="minute_of_hour", value=0))
+           | (On(unit="hour_of_day", value=17))
+       )
+   )
+
+How “next time” is computed
+---------------------------
+
+schedium computes future schedules using window time:
+
+- Each trigger implements ``next_window(after) -> TimeWindow | None``.
+- A job’s next run time is ``window.start``.
+
+See the Concepts pages for details:
+
+- :doc:`Window time <../concepts/window_time>`
+- :doc:`Trigger tokens & deduplication <../concepts/trigger_tokens>`
+- :doc:`Granularity <../concepts/granularity>`
 
 API reference
 -------------
