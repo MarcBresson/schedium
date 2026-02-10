@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from schedium.schemas.granularity import (
+from schedium.triggers.base import BaseTrigger
+from schedium.types.granularity import (
     UNIT_TO_GRANULARITY_MAP,
     Granularity,
     GranularityUnit,
 )
-from schedium.triggers.base import BaseTrigger
 from schedium.utils.window import TimeWindow
 
 

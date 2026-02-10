@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 
-from schedium.schemas.granularity import Granularity
+from schedium.types.granularity import Granularity
 
 
 def _months_since_epoch(dt: datetime, epoch_year: int = 1970) -> int:

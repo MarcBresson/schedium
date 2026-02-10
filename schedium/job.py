@@ -17,30 +17,11 @@ Most users will construct jobs directly and register them via
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
 from datetime import datetime
 
 from schedium.triggers import BaseTrigger
 from schedium.triggers.base import TriggerEvent
 from schedium.utils.evaluate import evaluate
-
-
-@dataclass(frozen=True, slots=True)
-class CancelJob:
-    """
-    Return value that cancels (removes) the current job.
-
-    If a job's callable returns an instance of :class:`~schedium.job.CancelJob`,
-    :meth:`schedium.scheduler.Scheduler.run_pending` will remove that job from
-    the scheduler.
-
-    Attributes
-    ----------
-    reason : str | None, default None
-        Optional human-readable reason for cancellation.
-    """
-
-    reason: str | None = None
 
 
 class Job:

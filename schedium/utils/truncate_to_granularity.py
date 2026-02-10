@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from schedium.schemas.granularity import Granularity
+from schedium.types.granularity import Granularity
 
 
 def truncate(dt: datetime, granularity: Granularity) -> datetime:

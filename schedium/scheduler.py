@@ -3,7 +3,8 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 
-from schedium.job import CancelJob, Job
+from schedium.job import Job
+from schedium.types.cancel_job import CancelJob
 
 logger = logging.getLogger(__name__)
 

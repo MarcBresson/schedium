@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from schedium.exceptions import NextRunMaxIterationsReached
-from schedium.schemas.granularity import Granularity
+from schedium.types.granularity import Granularity
 from schedium.utils.truncate_to_granularity import truncate
 from schedium.utils.window import (
     ONE_MICROSECOND,

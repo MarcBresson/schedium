@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from schedium.schemas.granularity import Granularity
-from schedium.schemas.on_unit import OnUnit
 from schedium.triggers.base import (
     BaseTrigger,
     _bucket_end_inclusive,
     _scan_next_match_start,
 )
+from schedium.types.granularity import Granularity
+from schedium.types.on_unit import OnUnit
 from schedium.utils.window import TimeWindow
 
 

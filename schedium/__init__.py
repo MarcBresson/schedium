@@ -2,7 +2,7 @@ from __future__ import annotations
 
 __version__ = "0.0.0"
 
-from .job import CancelJob, Job
+from .job import Job
 from .scheduler import JobDidNotRun, Scheduler
 from .triggers import (
     AndTrigger,
@@ -15,6 +15,7 @@ from .triggers import (
     Weekly,
 )
 from .triggers.sugar.tick import Tick
+from .types.cancel_job import CancelJob
 
 __all__ = [
     "AndTrigger",

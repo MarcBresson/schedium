@@ -3,12 +3,12 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone, tzinfo
 
-from schedium.schemas.granularity import (
+from schedium.triggers.base import BaseTrigger
+from schedium.types.granularity import (
     UNIT_TO_GRANULARITY_MAP,
     Granularity,
     GranularityUnit,
 )
-from schedium.triggers.base import BaseTrigger
 from schedium.utils.since_epoch import since_epoch
 from schedium.utils.truncate_to_granularity import truncate
 from schedium.utils.window import TimeWindow

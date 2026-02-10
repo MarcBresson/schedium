@@ -14,7 +14,7 @@ Granularity shows up in two places:
 The Granularity enum
 --------------------
 
-The enum lives in :class:`~schedium.schemas.granularity.Granularity` and is
+The enum lives in :class:`~schedium.types.granularity.Granularity` and is
 ordered from *finest* (most frequent) to *coarsest* (least frequent):
 
 - ``EXACT``
@@ -33,7 +33,7 @@ String units
 ^^^^^^^^^^^^
 
 Many APIs accept unit strings via
-:data:`~schedium.schemas.granularity.UNIT_TO_GRANULARITY_MAP`, for example
+:data:`~schedium.types.granularity.UNIT_TO_GRANULARITY_MAP`, for example
 ``"minute"`` or ``"day"``.
 
 What “bucket” means

@@ -1,12 +1,12 @@
 from datetime import datetime
 
-from schedium.schemas.granularity import Granularity
 from schedium.triggers import (
     AtDateTime,
     BaseCombinatorTrigger,
     BaseTrigger,
     TriggerEvent,
 )
+from schedium.types.granularity import Granularity
 from schedium.utils.truncate_to_granularity import truncate
 
 

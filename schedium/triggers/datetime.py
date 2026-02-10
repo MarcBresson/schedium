@@ -30,7 +30,7 @@ class BetweenDateTime(BaseTrigger):
 
     Granularity
         This trigger reports a fallback granularity of
-        :attr:`~schedium.schemas.granularity.Granularity.SECOND`. That fallback is
+        :attr:`~schedium.types.granularity.Granularity.SECOND`. That fallback is
         only used for generic scanning logic in
         :meth:`~schedium.triggers.base.BaseTrigger.next_window`.
         `BetweenDateTime` also implements an efficient
@@ -105,7 +105,7 @@ class AtDateTime(BaseTrigger):
     Notes
     -----
     Granularity.EXACT
-        `AtDateTime` declares :attr:`~schedium.schemas.granularity.Granularity.EXACT`
+        `AtDateTime` declares :attr:`~schedium.types.granularity.Granularity.EXACT`
         as both its required and fallback granularity.
 
     Deduplication token
