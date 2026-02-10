@@ -50,7 +50,7 @@ argument. This makes tests deterministic.
 Cancelling jobs
 ---------------
 
-If a job returns :class:`~schedium.job.CancelJob`, the scheduler removes that
+If a job returns :class:`~schedium.types.cancel_job.CancelJob`, the scheduler removes that
 job (it cancels itself).
 
 Related concepts

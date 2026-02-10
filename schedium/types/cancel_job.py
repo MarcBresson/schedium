@@ -8,7 +8,7 @@ class CancelJob:
     """
     Return value that cancels (removes) the current job.
 
-    If a job's callable returns an instance of :class:`~schedium.job.CancelJob`,
+    If a job's callable returns an instance of :class:`~schedium.types.cancel_job.CancelJob`,
     :meth:`schedium.scheduler.Scheduler.run_pending` will remove that job from
     the scheduler.
 

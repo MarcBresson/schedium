@@ -113,7 +113,7 @@ class Scheduler:
             The list of return values from each job. If a job is not due, its
             return value is :obj:`JobDidNotRun`.
 
-            If a job runs and returns :class:`~schedium.job.CancelJob`, the job
+            If a job runs and returns :class:`~schedium.types.cancel_job.CancelJob`, the job
             is removed from the scheduler.
         """
 

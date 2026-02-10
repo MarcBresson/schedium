@@ -167,6 +167,46 @@ This pattern is useful when:
 - you poll frequently (e.g., every second), and
 - a transient error would otherwise cause many retries within the same minute.
 
+Cancel a job after a failure (decorator)
+----------------------------------------
+
+If you want a job to stop running after it hits a known "fatal" error, you can
+decorate the job function with :func:`schedium.utils.cancel_job_on_failure`.
+
+This context manager:
+
+- catches only the exception types you specify,
+- logs the exception (with traceback), and
+- optionally returns :class:`~schedium.types.cancel_job.CancelJob` so the scheduler removes
+  the job.
+
+.. code-block:: python
+
+   import logging
+   from schedium import Every, Job, Scheduler
+   from schedium.utils import cancel_job_on_failure
+
+   logger = logging.getLogger(__name__)
+
+   @cancel_job_on_failure(
+     cancel=True,
+     catch=(ValueError,),
+     logger=logger,
+     log_message="task failed; cancelling job",
+   )
+   def task():
+     do_the_thing_that_might_raise()
+
+   sched = Scheduler()
+   sched.append(Job(task, Every(unit="minute", interval=1)))
+
+Notes:
+
+- Exceptions that are not in ``catch`` will still propagate out of
+  :meth:`~schedium.scheduler.Scheduler.run_pending`.
+- If you set ``cancel=False``, the exception is still logged and suppressed,
+  but the job stays scheduled.
+
 Exceptions from next-run computations
 -------------------------------------
 

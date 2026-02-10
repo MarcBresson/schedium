@@ -1,7 +1,7 @@
 API reference: Job
 ==================
 
-.. autoclass:: schedium.job.CancelJob
+.. autoclass:: schedium.types.cancel_job.CancelJob
    :members:
    :undoc-members:
    :show-inheritance:
