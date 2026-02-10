@@ -47,6 +47,7 @@ docs = [
   "numpydoc>=1.10.0",
   "sphinx_copybutton>=0.5.2",
   "sphinxext-opengraph[social_cards]>=0.13.0",
+  "sphinx-toolbox>=4.1.2",
 ]
 test = [
   "pytest",

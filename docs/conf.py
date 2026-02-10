@@ -25,6 +25,8 @@ extensions = [
     "sphinx_copybutton",
     "sphinx.ext.linkcode",
     "sphinxext.opengraph",
+    "sphinx_toolbox.sidebar_links",
+    "sphinx_toolbox.github",
 ]
 
 autosummary_generate = True
@@ -70,6 +72,10 @@ ogp_image = "https://raw.githubusercontent.com/MarcBresson/schedium/main/docs/lo
 ogp_social_cards = {
     "image": "logo.png",
 }
+
+# sidebar links
+github_username = "MarcBresson"
+github_repository = "schedium"
 
 
 def linkcode_resolve(domain, info):

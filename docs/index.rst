@@ -34,9 +34,10 @@ Contents
    :maxdepth: 2
    :caption: Guides
 
-   scheduler <usage/scheduler>
-   jobs <usage/jobs>
-   triggers <usage/triggers>
+   Scheduler <usage/scheduler>
+   Jobs <usage/jobs>
+   Triggers <usage/triggers>
+   Advanced <usage/advanced>
 
 .. toctree::
    :maxdepth: 2
