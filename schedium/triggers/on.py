@@ -9,7 +9,7 @@ from schedium.triggers.base import (
 )
 from schedium.types.granularity import Granularity
 from schedium.types.on_unit import OnUnit
-from schedium.utils.window import TimeWindow
+from schedium.types.time_window import TimeWindow
 
 
 class On(BaseTrigger):

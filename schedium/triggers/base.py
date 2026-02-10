@@ -6,10 +6,10 @@ from datetime import datetime, timedelta
 
 from schedium.exceptions import NextRunMaxIterationsReached
 from schedium.types.granularity import Granularity
+from schedium.types.time_window import TimeWindow
 from schedium.utils.truncate_to_granularity import truncate
 from schedium.utils.window import (
     ONE_MICROSECOND,
-    TimeWindow,
     window_intersection,
     window_union_if_overlapping,
 )
@@ -145,7 +145,7 @@ class BaseTrigger:
 
         Returns
         -------
-        schedium.utils.window.TimeWindow | None
+        schedium.types.time_window.TimeWindow | None
             Next validity window, or :obj:`None` if no future window exists.
 
         Raises

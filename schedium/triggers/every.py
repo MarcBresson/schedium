@@ -9,9 +9,9 @@ from schedium.types.granularity import (
     Granularity,
     GranularityUnit,
 )
+from schedium.types.time_window import TimeWindow
 from schedium.utils.since_epoch import since_epoch
 from schedium.utils.truncate_to_granularity import truncate
-from schedium.utils.window import TimeWindow
 
 logger = logging.getLogger(__name__)
 

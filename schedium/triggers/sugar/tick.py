@@ -8,7 +8,7 @@ from schedium.types.granularity import (
     Granularity,
     GranularityUnit,
 )
-from schedium.utils.window import TimeWindow
+from schedium.types.time_window import TimeWindow
 
 
 class Tick(BaseTrigger):

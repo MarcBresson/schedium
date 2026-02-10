@@ -13,7 +13,7 @@ for which the trigger is satisfied.
 TimeWindow
 ----------
 
-A :class:`~schedium.utils.window.TimeWindow` is a pair ``(start, end)``.
+A :class:`~schedium.types.time_window.TimeWindow` is a pair ``(start, end)``.
 
 - **Inclusive semantics**: the window represents ``start <= t <= end``.
 - **Unbounded windows**: ``end=None`` means the window is valid forever into the future.

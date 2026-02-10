@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from schedium.triggers.base import BaseTrigger, Granularity
-from schedium.utils.window import TimeWindow
+from schedium.types.time_window import TimeWindow
 
 
 class BetweenDateTime(BaseTrigger):

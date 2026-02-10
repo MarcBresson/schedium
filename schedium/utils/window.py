@@ -1,22 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-
-@dataclass(frozen=True)
-class TimeWindow:
-    """
-    A validity window for a trigger.
-
-    The window is inclusive on both ends: ``start <= t <= end``.
-
-    If ``end`` is None, the window is unbounded into the future.
-    """
-
-    start: datetime
-    end: datetime | None
-
+from schedium.types.time_window import TimeWindow
 
 ONE_MICROSECOND = timedelta(microseconds=1)
 
@@ -29,9 +15,9 @@ def window_overlaps(a: TimeWindow, b: TimeWindow) -> bool:
 
     Parameters
     ----------
-    a : schedium.utils.window.TimeWindow
+    a : schedium.types.time_window.TimeWindow
         First window.
-    b : schedium.utils.window.TimeWindow
+    b : schedium.types.time_window.TimeWindow
         Second window.
 
     Returns

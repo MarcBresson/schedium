@@ -9,7 +9,7 @@ Granularity shows up in two places:
 - **Deduplication**: deciding whether a job already ran for the current “time
   bucket”.
 - **Scanning and bucket windows**: default logic that searches forward for the
-  next match and/or returns a single-bucket :class:`~schedium.utils.window.TimeWindow`.
+  next match and/or returns a single-bucket :class:`~schedium.types.time_window.TimeWindow`.
 
 The Granularity enum
 --------------------
