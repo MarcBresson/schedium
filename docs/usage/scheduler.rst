@@ -63,4 +63,4 @@ Related concepts
 API reference
 -------------
 
-- :doc:`/api/scheduler <../api/scheduler>`
+full API reference for :class:`~schedium.job.Job` available in :doc:`/api/scheduler <../api/scheduler>`.

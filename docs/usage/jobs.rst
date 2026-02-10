@@ -182,13 +182,3 @@ API reference
 -------------
 
 full API reference for :class:`~schedium.job.Job` available in :doc:`/api/job <../api/job>`.
-
-.. autoclass:: schedium.job.Job
-   :no-index:
-   :show-inheritance:
-
-Scheduler API reference is available in :doc:`/api/scheduler <../api/scheduler>`.
-
-.. autoclass:: schedium.scheduler.Scheduler
-   :no-index:
-   :show-inheritance:
