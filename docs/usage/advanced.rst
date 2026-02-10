@@ -7,3 +7,4 @@ This section documents advanced usage patterns.
    :maxdepth: 2
 
    Timezone <timezone>
+   Exceptions <exceptions>
