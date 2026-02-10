@@ -1,7 +1,9 @@
 API reference: Job
 ==================
 
-.. autoclass:: schedium.job.JobDidNotRun
+.. autodata:: schedium.job.JobDidNotRun
+   :no-value:
+   :annotation:
 
 .. autoclass:: schedium.job.CancelJob
    :members:
