@@ -46,7 +46,7 @@ This is what powers deduplication when ``run_pending`` is called repeatedly.
 .. code-block:: python
 
    from datetime import datetime
-   from schedium import DidNotRun, Every, Job, Scheduler
+   from schedium import JobDidNotRun, Every, Job, Scheduler
 
    sched = Scheduler()
 
@@ -59,7 +59,7 @@ This is what powers deduplication when ``run_pending`` is called repeatedly.
 
    # Not on a minute boundary => not due
    results = sched.run_pending(now=datetime(2026, 2, 4, 10, 0, 30))
-   assert results[0] is DidNotRun
+   assert results[0] is JobDidNotRun
 
    # On the boundary => due
    results = sched.run_pending(now=datetime(2026, 2, 4, 10, 1, 0))
@@ -68,7 +68,7 @@ This is what powers deduplication when ``run_pending`` is called repeatedly.
 
    # Same boundary again => dedup
    results = sched.run_pending(now=datetime(2026, 2, 4, 10, 1, 0))
-   assert results[0] is DidNotRun
+   assert results[0] is JobDidNotRun
 
 Trigger tokens and deduplication
 --------------------------------
@@ -108,12 +108,12 @@ Return values
 ``Scheduler.run_pending(...)`` returns a list aligned with ``Scheduler.jobs``:
 
 - If a job runs, its entry is the callable's return value.
-- If a job does not run, its entry is the sentinel :ref:`schedium.job.JobDidNotRun`.
+- If a job does not run, its entry is the sentinel :py:obj:`schedium.scheduler.JobDidNotRun`.
 - If a job returns :class:`~schedium.job.CancelJob` in a scheduler, the job is removed
   from the scheduler. See below for more information.
 
 Cancelling a job (self-removal)
-------------------------------
+-------------------------------
 
 Sometimes a job should stop scheduling itself (for example, after completing a
 one-off migration, or after detecting a permanent configuration error).

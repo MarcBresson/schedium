@@ -24,9 +24,6 @@ from schedium.triggers import BaseTrigger
 from schedium.triggers.base import TriggerEvent
 from schedium.utils.evaluate import evaluate
 
-JobDidNotRun = object()
-"""Sentinel value used by Scheduler.run_pending to indicate a job was not due"""
-
 
 @dataclass(frozen=True, slots=True)
 class CancelJob:

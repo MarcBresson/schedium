@@ -57,4 +57,6 @@ Contents
    :maxdepth: 1
    :caption: Links
 
-   :github:repo:
+   GitHub <https://github.com/MarcBresson/schedium>
+   Issues <https://github.com/MarcBresson/schedium/issues>
+   PyPI <https://pypi.org/project/schedium/>

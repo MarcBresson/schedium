@@ -66,7 +66,7 @@ For most trigger trees, the token has the form::
 
 A job runs at most once per token. If you call
 :meth:`schedium.scheduler.Scheduler.run_pending` repeatedly, it will keep
-returning :obj:`schedium.scheduler.DidNotRun` for that job until the token
+returning :obj:`schedium.scheduler.JobDidNotRun` for that job until the token
 changes (i.e., the bucket changes).
 
 .. _effective-granularity:

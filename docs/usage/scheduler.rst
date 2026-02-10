@@ -36,13 +36,13 @@ argument. This makes tests deterministic.
 .. code-block:: python
 
    from datetime import datetime
-   from schedium import DidNotRun, Every, Job, Scheduler
+   from schedium import JobDidNotRun, Every, Job, Scheduler
 
    sched = Scheduler()
    sched.append(Job(lambda: "ran", Every(unit="minute", interval=1)))
 
    # Not on a minute boundary
-   assert sched.run_pending(now=datetime(2026, 2, 4, 10, 0, 30))[0] is DidNotRun
+   assert sched.run_pending(now=datetime(2026, 2, 4, 10, 0, 30))[0] is JobDidNotRun
 
    # On the boundary
    assert sched.run_pending(now=datetime(2026, 2, 4, 10, 1, 0))[0] == "ran"

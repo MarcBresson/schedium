@@ -3,9 +3,12 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 
-from schedium.job import CancelJob, Job, JobDidNotRun
+from schedium.job import CancelJob, Job
 
 logger = logging.getLogger(__name__)
+
+JobDidNotRun = object()
+"""Sentinel value used by Scheduler.run_pending to indicate a job was not due"""
 
 
 class Scheduler:
@@ -23,7 +26,7 @@ class Scheduler:
     Notes
     -----
     - :meth:`run_pending` returns a list aligned with :attr:`jobs`. For jobs that
-        are not due, the entry is the sentinel :obj:`DidNotRun`.
+        are not due, the entry is the sentinel :obj:`JobDidNotRun`.
     - Many triggers match only at specific boundaries (minute/hour/day). In
         production, call :meth:`run_pending` on a short interval (e.g., once per
         second) so you don't skip over a matching boundary.
@@ -107,7 +110,7 @@ class Scheduler:
         -------
         list[object]
             The list of return values from each job. If a job is not due, its
-            return value is :obj:`DidNotRun`.
+            return value is :obj:`JobDidNotRun`.
 
             If a job runs and returns :class:`~schedium.job.CancelJob`, the job
             is removed from the scheduler.

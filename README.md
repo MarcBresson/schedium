@@ -107,7 +107,7 @@ schedium automatically deduplicates job runs. Calling `run_pending()` repeatedly
 
 ```python
 from datetime import datetime
-from schedium import DidNotRun, Every, Job, Scheduler
+from schedium import JobDidNotRun, Every, Job, Scheduler
 
 sched = Scheduler()
 sched.append(Job(lambda: print("tick"), Every(unit="minute", interval=1)))
@@ -117,7 +117,7 @@ sched.run_pending(now=datetime(2026, 2, 4, 10, 5, 0))
 
 # Second call at 10:05 → already ran for this bucket
 result = sched.run_pending(now=datetime(2026, 2, 4, 10, 5, 0))
-assert result[0] is DidNotRun
+assert result[0] is JobDidNotRun
 
 # Next minute → runs again
 sched.run_pending(now=datetime(2026, 2, 4, 10, 6, 0))

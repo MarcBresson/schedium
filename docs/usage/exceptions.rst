@@ -107,7 +107,7 @@ isolate exceptions at the scheduler loop.
    import logging
    import time
    from datetime import datetime
-   from schedium import DidNotRun, Scheduler
+   from schedium import JobDidNotRun, Scheduler
 
    logger = logging.getLogger(__name__)
 
@@ -119,10 +119,10 @@ isolate exceptions at the scheduler loop.
        results = []
        for job in list(sched.jobs):
            try:
-               results.append(job.run(now) if job.is_due(now) else DidNotRun)
+               results.append(job.run(now) if job.is_due(now) else JobDidNotRun)
            except Exception:
                logger.exception("job failed: %r", job)
-               results.append(DidNotRun)
+               results.append(JobDidNotRun)
        time.sleep(1)
 
 Notes:
