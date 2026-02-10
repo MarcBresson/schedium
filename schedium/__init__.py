@@ -2,7 +2,8 @@ from __future__ import annotations
 
 __version__ = "0.0.0"
 
-from .scheduler import DidNotRun, Job, Scheduler
+from .job import CancelJob, Job
+from .scheduler import JobDidNotRun, Scheduler
 from .triggers import (
     AndTrigger,
     AtDateTime,
@@ -20,7 +21,8 @@ __all__ = [
     "AtDateTime",
     "Between",
     "BetweenDateTime",
-    "DidNotRun",
+    "CancelJob",
+    "JobDidNotRun",
     "Every",
     "Job",
     "On",

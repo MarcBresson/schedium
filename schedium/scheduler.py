@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 
-from schedium.job import Job
+from schedium.job import CancelJob, Job, JobDidNotRun
 
-DidNotRun = object()
+logger = logging.getLogger(__name__)
 
 
 class Scheduler:
@@ -32,13 +33,13 @@ class Scheduler:
     Run something every 5 minutes
 
     >>> from datetime import datetime
-    >>> from schedium import DidNotRun, Every, Job, Scheduler
+    >>> from schedium import JobDidNotRun, Every, Job, Scheduler
     >>> sched = Scheduler()
     >>> def tick():
     ...     print("tick")
     >>> sched.append(Job(tick, Every(unit="minute", interval=5)))
     >>> results = sched.run_pending(now=datetime(2026, 2, 4, 10, 1, 0))
-    >>> results[0] is DidNotRun
+    >>> results[0] is JobDidNotRun
     True
     >>> results = sched.run_pending(now=datetime(2026, 2, 4, 10, 5, 0))
     tick
@@ -48,7 +49,7 @@ class Scheduler:
     Deduplication when called repeatedly at the same timestamp
 
     >>> results = sched.run_pending(now=datetime(2026, 2, 4, 10, 5, 0))  # same minute bucket
-    >>> results[0] is DidNotRun
+    >>> results[0] is JobDidNotRun
     True
 
     Combine triggers (weekday at 08:00)
@@ -107,15 +108,36 @@ class Scheduler:
         list[object]
             The list of return values from each job. If a job is not due, its
             return value is :obj:`DidNotRun`.
+
+            If a job runs and returns :class:`~schedium.job.CancelJob`, the job
+            is removed from the scheduler.
         """
 
         now_dt = now if now is not None else datetime.now()
         results: list[object] = []
+
+        # Iterate over a snapshot so results align with the jobs that were
+        # present at the start of this call.
         for job in list(self.jobs):
-            if job.is_due(now_dt):
-                results.append(job.run(now_dt))
-            else:
-                results.append(DidNotRun)
+            if not job.is_due(now_dt):
+                results.append(JobDidNotRun)
+                continue
+
+            result = job.run(now_dt)
+            results.append(result)
+
+            if isinstance(result, CancelJob):
+                try:
+                    self.jobs.remove(job)
+                except ValueError:
+                    # Already removed by user code.
+                    pass
+                logger.info(
+                    "Job %r cancelled itself (reason=%r)",
+                    job,
+                    result.reason,
+                )
+
         return results
 
     def time_of_next_run(

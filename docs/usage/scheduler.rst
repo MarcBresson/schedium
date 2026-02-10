@@ -47,6 +47,12 @@ argument. This makes tests deterministic.
    # On the boundary
    assert sched.run_pending(now=datetime(2026, 2, 4, 10, 1, 0))[0] == "ran"
 
+Cancelling jobs
+---------------
+
+If a job returns :class:`~schedium.job.CancelJob`, the scheduler removes that
+job (it cancels itself).
+
 Related concepts
 ----------------
 
