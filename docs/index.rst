@@ -52,3 +52,9 @@ Contents
    Scheduler <api/scheduler>
    Job <api/job>
    Triggers <api/triggers/index>
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Links
+
+   :github:repo:
