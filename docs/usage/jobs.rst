@@ -178,15 +178,6 @@ For example: stop running after a successful one-time backfill:
    assert isinstance(result[0], CancelJob)
    assert len(sched.jobs) == 0
 
-Errors
-------
-
-``Job.run(now)`` raises ``RuntimeError`` if you call it when the job is not due or if you
-call it twice for the same token.
-
-In normal usage you should call ``Scheduler.run_pending(...)`` instead of calling
-``Job.run(...)`` directly.
-
 API reference
 -------------
 
