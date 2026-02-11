@@ -26,27 +26,6 @@ schedium is intentionally "in-process": you call
        sched.run_pending()
        time.sleep(1)
 
-Testing and deterministic time
-------------------------------
-
-Both :meth:`~schedium.scheduler.Scheduler.run_pending` and
-:meth:`~schedium.scheduler.Scheduler.time_of_next_run` accept an explicit time
-argument. This makes tests deterministic.
-
-.. code-block:: python
-
-   from datetime import datetime
-   from schedium import JobDidNotRun, Every, Job, Scheduler
-
-   sched = Scheduler()
-   sched.append(Job(lambda: "ran", Every(unit="minute", interval=1)))
-
-   # Not on a minute boundary
-   assert sched.run_pending(now=datetime(2026, 2, 4, 10, 0, 30))[0] is JobDidNotRun
-
-   # On the boundary
-   assert sched.run_pending(now=datetime(2026, 2, 4, 10, 1, 0))[0] == "ran"
-
 Cancelling jobs
 ---------------
 
