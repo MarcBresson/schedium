@@ -43,12 +43,14 @@ def cancel_job_on_failure(
     """
     Decorator that logs specified exceptions and optionally cancels the job.
 
-    - If the wrapped callable raises an exception that matches ``catch``:
-      - the exception is logged (with traceback),
-      - the exception is suppressed,
-      - if ``cancel=True`` the wrapper returns :class:`~schedium.types.cancel_job.CancelJob`
-        so :meth:`schedium.scheduler.Scheduler.run_pending` removes the job.
-    - If an exception does not match ``catch``, it propagates.
+    If the wrapped callable raises an exception that matches ``catch``:
+
+    - the exception is logged (with traceback),
+    - the exception is suppressed,
+    - if ``cancel=True`` the wrapper returns :class:`~schedium.types.cancel_job.CancelJob`
+      so :meth:`schedium.scheduler.Scheduler.run_pending` removes the job.
+
+    If an exception does not match ``catch``, it propagates.
 
     Parameters
     ----------
