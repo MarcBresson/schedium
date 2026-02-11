@@ -35,6 +35,49 @@ A job takes:
 
    sched.append(job)
 
+Return values
+-------------
+
+``Scheduler.run_pending(...)`` returns a list aligned with ``Scheduler.jobs``:
+
+- If a job runs, its entry is the callable's return value.
+- If a job does not run, its entry is the sentinel :py:obj:`schedium.scheduler.JobDidNotRun`.
+- If a job returns :class:`~schedium.types.cancel_job.CancelJob` in a scheduler, the job is removed
+  from the scheduler. See below for more information.
+
+.. _jobs-cancelling-a-job-self-removal:
+
+Cancelling a job (self-removal)
+-------------------------------
+
+Sometimes a job should stop scheduling itself (for example, after completing a
+one-off migration, or after detecting a permanent configuration error).
+
+If a job's callable returns :class:`~schedium.types.cancel_job.CancelJob`, schedium removes
+that job from the scheduler.
+
+.. code-block:: python
+
+   from datetime import datetime
+   from schedium import CancelJob, Every, Job, Scheduler
+
+   sched = Scheduler()
+
+   def run_once_then_cancel():
+      # do work...
+      if condition_to_stop():
+         return CancelJob("completed")
+
+   sched.append(Job(run_once_then_cancel, Every(unit="minute", interval=1)))
+
+   # First due evaluation: job runs and cancels itself.
+   result = sched.run_pending(now=datetime(2026, 2, 4, 10, 0, 0))
+   assert isinstance(result[0], CancelJob)
+   assert len(sched.jobs) == 0
+
+   # Subsequent calls: nothing left to run.
+   assert sched.run_pending(now=datetime(2026, 2, 4, 10, 1, 0)) == []
+
 Due vs not due
 --------------
 
@@ -101,84 +144,6 @@ Example: every minute, but only during working hours
    trigger = Every(unit="minute", interval=1) & Between(unit="hour_of_day", start=9, end=17)
 
    sched.append(Job(work_hours_task, trigger, name="work-hours"))
-
-Return values
--------------
-
-``Scheduler.run_pending(...)`` returns a list aligned with ``Scheduler.jobs``:
-
-- If a job runs, its entry is the callable's return value.
-- If a job does not run, its entry is the sentinel :py:obj:`schedium.scheduler.JobDidNotRun`.
-- If a job returns :class:`~schedium.types.cancel_job.CancelJob` in a scheduler, the job is removed
-  from the scheduler. See below for more information.
-
-.. _jobs-cancelling-a-job-self-removal:
-
-Cancelling a job (self-removal)
--------------------------------
-
-Sometimes a job should stop scheduling itself (for example, after completing a
-one-off migration, or after detecting a permanent configuration error).
-
-If a job's callable returns :class:`~schedium.types.cancel_job.CancelJob`, schedium removes
-that job from the scheduler.
-
-.. code-block:: python
-
-   from datetime import datetime
-   from schedium import CancelJob, Every, Job, Scheduler
-
-   sched = Scheduler()
-
-   def run_once_then_cancel():
-      # do work...
-      return CancelJob("completed")
-
-   sched.append(Job(run_once_then_cancel, Every(unit="minute", interval=1)))
-
-   # First due evaluation: job runs and cancels itself.
-   result = sched.run_pending(now=datetime(2026, 2, 4, 10, 0, 0))
-   assert isinstance(result[0], CancelJob)
-   assert len(sched.jobs) == 0
-
-   # Subsequent calls: nothing left to run.
-   assert sched.run_pending(now=datetime(2026, 2, 4, 10, 1, 0)) == []
-
-Conditionally cancelling (if-branch)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-It's common to cancel a job only after some condition is met.
-
-For example: stop running after a successful one-time backfill:
-
-.. code-block:: python
-
-   from datetime import datetime
-   from schedium import CancelJob, Every, Job, Scheduler
-
-   sched = Scheduler()
-
-   state = {"done": False}
-
-   def backfill_then_stop():
-      if not state["done"]:
-         # do_backfill_work()  # may take a while
-         state["done"] = True
-         return None
-
-      # Next due run: we've already completed the work, so cancel the schedule.
-      return CancelJob("backfill completed")
-
-   sched.append(Job(backfill_then_stop, Every(unit="minute", interval=1)))
-
-   # First due run: does the work.
-   assert sched.run_pending(now=datetime(2026, 2, 4, 10, 0, 0)) == [None]
-   assert len(sched.jobs) == 1
-
-   # Second due run: cancels itself.
-   result = sched.run_pending(now=datetime(2026, 2, 4, 10, 1, 0))
-   assert isinstance(result[0], CancelJob)
-   assert len(sched.jobs) == 0
 
 API reference
 -------------
