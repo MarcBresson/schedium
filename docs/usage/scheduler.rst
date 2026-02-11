@@ -30,7 +30,7 @@ Cancelling jobs
 ---------------
 
 If a job returns :class:`~schedium.types.cancel_job.CancelJob`, the scheduler removes that
-job (it cancels itself).
+job (it cancels itself). See :ref:`jobs-cancelling-a-job-self-removal`.
 
 Related concepts
 ----------------

@@ -112,6 +112,8 @@ Return values
 - If a job returns :class:`~schedium.types.cancel_job.CancelJob` in a scheduler, the job is removed
   from the scheduler. See below for more information.
 
+.. _jobs-cancelling-a-job-self-removal:
+
 Cancelling a job (self-removal)
 -------------------------------
 
