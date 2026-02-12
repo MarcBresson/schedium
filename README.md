@@ -5,7 +5,7 @@
 <h1 align="center">schedium</h1>
 
 <p align="center">
-  <em>A lightweight, composable, in-process job scheduler for Python.</em>
+  <em>A lightweight, composable, in-process, pure-python job scheduler.</em>
 </p>
 
 <p align="center">

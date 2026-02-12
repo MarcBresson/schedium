@@ -1,11 +1,17 @@
 Schedium
 ===========
 
-Schedium is a small in-process scheduler.
+A lightweight, composable, in-process, pure-python job scheduler.
 
-- You register **jobs** (a callable + a trigger).
-- You call ``Scheduler.run_pending(...)`` periodically.
-- Jobs run inline and are **deduplicated** per trigger token, i.e., they won't run more than once for the same trigger event.
+Why schedium?
+-------------
+
+- **No threads, no processes** — jobs run inline when you call `run_pending()`.
+- **Composable triggers** — build complex schedules by combining simple primitives with `&` (AND) and `|` (OR).
+- **Automatic deduplication** — calling `run_pending()` multiple times within the same time bucket is safe; jobs run at most once per bucket.
+- **Zero dependencies** — pure Python, nothing outside the standard library.
+- **Fully typed** — first-class type annotations and mypy-checked.
+- support all currently maintained python versions: 3.10, 3.11, 3.12, 3.13, and 3.14
 
 Installation
 ------------
