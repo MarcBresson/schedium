@@ -184,11 +184,9 @@ class BaseTrigger:
         return TimeWindow(start=start, end=_bucket_end_inclusive(start, granularity))
 
 
-@dataclass(frozen=True)
 class BaseCombinatorTrigger(BaseTrigger):
-    """Base class for triggers that combine other triggers."""
-
-    triggers: Sequence[BaseTrigger]
+    def __init__(self, triggers: Sequence[BaseTrigger]) -> None:
+        self.triggers = triggers
 
     def __repr__(self) -> str:
         inner = ", ".join(repr(t) for t in self.triggers)
@@ -211,8 +209,7 @@ class BaseCombinatorTrigger(BaseTrigger):
         return min(gran) if gran else None
 
 
-@dataclass(frozen=True)
-class AndTrigger(BaseCombinatorTrigger):
+class AndTrigger(BaseCombinatorTrigger):  # numpydoc ignore=PR02
     """
     Logical AND (intersection) of multiple triggers.
 
@@ -221,6 +218,11 @@ class AndTrigger(BaseCombinatorTrigger):
 
     In window-time terms, ``A & B`` behaves like the intersection of the next
     validity windows returned by ``A`` and ``B``.
+
+    Parameters
+    ----------
+    triggers : Sequence[BaseTrigger]
+        Child triggers to combine with AND logic.
 
     Notes
     -----
@@ -301,8 +303,7 @@ class AndTrigger(BaseCombinatorTrigger):
         )
 
 
-@dataclass(frozen=True)
-class OrTrigger(BaseCombinatorTrigger):
+class OrTrigger(BaseCombinatorTrigger):  # numpydoc ignore=PR02
     """
     Logical OR (alternatives) of multiple triggers.
 
@@ -312,6 +313,11 @@ class OrTrigger(BaseCombinatorTrigger):
     For ``A | B``, :meth:`~schedium.triggers.base.BaseTrigger.next_window` returns
     the earliest next window among children. If multiple children yield overlapping
     windows at the earliest start, those windows are merged.
+
+    Parameters
+    ----------
+    triggers : Sequence[BaseTrigger]
+        Child triggers to combine with OR logic.
 
     Notes
     -----
