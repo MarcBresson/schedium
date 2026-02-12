@@ -31,10 +31,13 @@ def window_overlaps(a: TimeWindow, b: TimeWindow) -> bool:
 
     if a_end is None and b_end is None:
         return True
-    if a_end is None:
-        return a.start <= b_end  # type: ignore[operator]
-    if b_end is None:
+    if a_end is None and b_end is not None:
+        return a.start <= b_end
+    if b_end is None and a_end is not None:
         return b.start <= a_end
+    # at this point, it is not possible for either end to be None,
+    # so we can compare them directly. The assert is for type checkers.
+    assert a_end is not None and b_end is not None
     return a.start <= b_end and b.start <= a_end
 
 
