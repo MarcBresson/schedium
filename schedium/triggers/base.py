@@ -107,10 +107,14 @@ class BaseTrigger:
     """
 
     def __and__(self, other: BaseTrigger) -> BaseCombinatorTrigger:
-        return AndTrigger(triggers=[self, other])
+        left = self.triggers if isinstance(self, AndTrigger) else (self,)
+        right = other.triggers if isinstance(other, AndTrigger) else (other,)
+        return AndTrigger(triggers=[*left, *right])
 
     def __or__(self, other: BaseTrigger) -> BaseCombinatorTrigger:
-        return OrTrigger(triggers=[self, other])
+        left = self.triggers if isinstance(self, OrTrigger) else (self,)
+        right = other.triggers if isinstance(other, OrTrigger) else (other,)
+        return OrTrigger(triggers=[*left, *right])
 
     def matches(self, now: datetime) -> bool:
         raise NotImplementedError
@@ -182,7 +186,13 @@ class BaseTrigger:
 
 @dataclass(frozen=True)
 class BaseCombinatorTrigger(BaseTrigger):
+    """Base class for triggers that combine other triggers."""
+
     triggers: Sequence[BaseTrigger]
+
+    def __repr__(self) -> str:
+        inner = ", ".join(repr(t) for t in self.triggers)
+        return f"{type(self).__name__}({inner})"
 
     def required_granularity(self) -> Granularity | None:
         gran: list[Granularity] = []
@@ -203,6 +213,42 @@ class BaseCombinatorTrigger(BaseTrigger):
 
 @dataclass(frozen=True)
 class AndTrigger(BaseCombinatorTrigger):
+    """
+    Logical AND (intersection) of multiple triggers.
+
+    An :class:`~schedium.triggers.AndTrigger` matches a datetime only when **all**
+    its child triggers match.
+
+    In window-time terms, ``A & B`` behaves like the intersection of the next
+    validity windows returned by ``A`` and ``B``.
+
+    Notes
+    -----
+    - Prefer composing with ``&`` over instantiating :class:`~schedium.triggers.AndTrigger`
+      directly.
+    - ``&`` is associative in meaning. schedium also flattens nested AND nodes,
+      so ``(A & B) & C`` becomes a single :class:`~schedium.triggers.AndTrigger`.
+
+    Examples
+    --------
+    Use ``&`` to combine existing triggers:
+
+    >>> from schedium import Every, On
+    >>> trigger1 = Every(unit="day", interval=1)
+    >>> trigger2 = On(unit="hour_of_day", value=8)
+    >>> trigger3 = On(unit="minute_of_hour", value=0)
+
+    ``trigger1 & trigger2`` produces an explicit ``AndTrigger(trigger1, trigger2)``:
+
+    >>> trigger1 & trigger2
+    AndTrigger(Every(unit='day', interval=1, offset=0), On(unit='hour_of_day', value=8))
+
+    Chaining ``&`` is flattened into a single AndTrigger node:
+
+    >>> trigger1 & trigger2 & trigger3
+    AndTrigger(Every(unit='day', interval=1, offset=0), On(unit='hour_of_day', value=8), On(unit='minute_of_hour', value=0))
+    """
+
     def matches(self, now: datetime) -> bool:
         return all(t.matches(now) for t in self.triggers)
 
@@ -257,6 +303,24 @@ class AndTrigger(BaseCombinatorTrigger):
 
 @dataclass(frozen=True)
 class OrTrigger(BaseCombinatorTrigger):
+    """
+    Logical OR (alternatives) of multiple triggers.
+
+    An :class:`~schedium.triggers.OrTrigger` matches a datetime when **any** child
+    trigger matches.
+
+    For ``A | B``, :meth:`~schedium.triggers.base.BaseTrigger.next_window` returns
+    the earliest next window among children. If multiple children yield overlapping
+    windows at the earliest start, those windows are merged.
+
+    Notes
+    -----
+    - Prefer composing with ``|`` over instantiating :class:`~schedium.triggers.OrTrigger`
+        directly.
+    - schedium flattens nested OR nodes, so ``(A | B) | C`` becomes a single
+        :class:`~schedium.triggers.OrTrigger`.
+    """
+
     def matches(self, now: datetime) -> bool:
         return any(t.matches(now) for t in self.triggers)
 

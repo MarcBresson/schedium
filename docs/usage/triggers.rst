@@ -140,7 +140,7 @@ also exposes :class:`~schedium.triggers.AndTrigger` and
 
    from schedium import Every, On
 
-   # Equivalent to: AndTrigger([Every(...), On(...)])
+   # Equivalent to: AndTrigger(Every(...), On(...))
    trigger = Every(unit="day", interval=1) & On(unit="hour_of_day", value=8)
 
 AND (intersection)
