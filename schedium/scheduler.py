@@ -8,7 +8,11 @@ from schedium.types.cancel_job import CancelJob
 
 logger = logging.getLogger(__name__)
 
-JobDidNotRun = object()
+
+class JobDidNotRunType: ...
+
+
+JobDidNotRun = JobDidNotRunType()
 """Sentinel value used by Scheduler.run_pending to indicate a job was not due"""
 
 
