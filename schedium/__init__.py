@@ -4,6 +4,11 @@ __version__ = "0.0.0"
 
 from .job import Job
 from .scheduler import JobDidNotRun, Scheduler
+from .threading import (
+    QueuedJobsScheduler,
+    SchedulerThread,
+    ThreadedJobsScheduler,
+)
 from .triggers import (
     AndTrigger,
     AtDateTime,
@@ -28,7 +33,11 @@ __all__ = [
     "Job",
     "On",
     "OrTrigger",
+    "QueuedJobsScheduler",
     "Scheduler",
+    "SchedulerThread",
     "Tick",
+    "ThreadedJobsScheduler",
+    "ThreadedSchedulerConfig",
     "Weekly",
 ]

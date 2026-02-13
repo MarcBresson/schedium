@@ -8,3 +8,4 @@ This section documents advanced usage patterns.
 
    Timezone <timezone>
    Exceptions <exceptions>
+   Threading <threading>

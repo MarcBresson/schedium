@@ -65,6 +65,7 @@ Contents
    Scheduler <api/scheduler>
    Job <api/job>
    Utils <api/utils>
+   Threading <api/threading>
    Triggers <api/triggers/index>
 
 .. toctree::
