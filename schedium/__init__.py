@@ -38,6 +38,5 @@ __all__ = [
     "SchedulerThread",
     "Tick",
     "ThreadedJobsScheduler",
-    "ThreadedSchedulerConfig",
     "Weekly",
 ]

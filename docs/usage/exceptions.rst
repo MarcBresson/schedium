@@ -173,7 +173,7 @@ Cancel a job after a failure (decorator)
 If you want a job to stop running after it hits a known "fatal" error, you can
 decorate the job function with :func:`schedium.utils.cancel_job_on_failure`.
 
-This context manager:
+This decorator:
 
 - catches only the exception types you specify,
 - logs the exception (with traceback), and

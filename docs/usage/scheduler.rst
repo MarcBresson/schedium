@@ -42,4 +42,4 @@ Related concepts
 API reference
 -------------
 
-full API reference for :class:`~schedium.job.Job` available in :doc:`/api/scheduler <../api/scheduler>`.
+full API reference for :class:`~schedium.scheduler.Scheduler` available in :doc:`/api/scheduler <../api/scheduler>`.
