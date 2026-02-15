@@ -100,18 +100,18 @@ This is what powers deduplication when ``run_pending`` is called repeatedly.
 
    sched.append(Job(task, Every(unit="minute", interval=1)))
 
-   # Not on a minute boundary => not due
+   # First call in this minute bucket => due
    results = sched.run_pending(now=datetime(2026, 2, 4, 10, 0, 30))
-   assert results[0] is JobDidNotRun
-
-   # On the boundary => due
-   results = sched.run_pending(now=datetime(2026, 2, 4, 10, 1, 0))
    # prints: task
    assert results == [None]
 
-   # Same boundary again => dedup
-   results = sched.run_pending(now=datetime(2026, 2, 4, 10, 1, 0))
+   # Same minute bucket again => dedup
+   results = sched.run_pending(now=datetime(2026, 2, 4, 10, 0, 45))
    assert results[0] is JobDidNotRun
+
+   # Next minute => due again
+   results = sched.run_pending(now=datetime(2026, 2, 4, 10, 1, 0))
+   assert results == [None]
 
 Trigger tokens and deduplication
 --------------------------------
