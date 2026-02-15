@@ -37,6 +37,7 @@ Every (cadence)
 
    Every(unit="minute", interval=5)          # every 5 minutes
    Every(unit="hour", interval=2, offset=1)  # every 2 hours, phase-shifted
+   Every(unit="minute", interval=10, auto_offset=True)  # start now, keep cadence
 
 Tick (bucket limiter)
 ^^^^^^^^^^^^^^^^^^^^^
@@ -121,13 +122,24 @@ Weekly (helper)
 ^^^^^^^^^^^^^^^
 
 :func:`~schedium.triggers.sugar.weekly.Weekly` is a convenience helper that
-builds a composed trigger for “weekly on weekday X, optionally at HH:MM”.
+builds a composed trigger for “weekly on weekday X, optionally at a time”.
+
+Useful details:
+
+- ``day`` accepts weekday strings (``"mon"``, ``"monday"``, etc.) or ISO weekday
+   integers (1=Mon .. 7=Sun).
+- ``at`` accepts ``HH:MM`` and also ``HH:MM:SS[.mmm]``.
+- ``force_0_minute=True`` can force exact top-of-hour behavior when ``at`` has
+   minute ``00``.
 
 .. code-block:: python
 
+   from datetime import time
    from schedium import Weekly
 
    trigger = Weekly("mon", at="09:30")
+   trigger = Weekly(1, at=time(9, 30, 15))
+   trigger = Weekly("thu", at="09:00", force_0_minute=True)
 
 Composing triggers (AND / OR)
 -----------------------------
