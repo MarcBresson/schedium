@@ -11,7 +11,7 @@ Why schedium?
 - **Automatic deduplication** — calling `run_pending()` multiple times within the same time bucket is safe; jobs run at most once per bucket.
 - **Zero dependencies** — pure Python, nothing outside the standard library.
 - **Fully typed** — first-class type annotations and mypy-checked.
-- support all currently maintained python versions: 3.10, 3.11, 3.12, 3.13, and 3.14
+- **Supports all currently maintained Python versions**: 3.10, 3.11, 3.12, 3.13, and 3.14.
 
 Installation
 ------------
@@ -25,6 +25,7 @@ Quick start
 
 .. code-block:: python
 
+   import time
    from schedium import Every, Job, Weekly, Scheduler
 
    sched = Scheduler()
@@ -39,6 +40,7 @@ Quick start
 
    while True:
       sched.run_pending()
+      time.sleep(1)
 
 Contents
 --------
@@ -64,6 +66,7 @@ Contents
 
    Scheduler <api/scheduler>
    Job <api/job>
+   Exceptions <api/exceptions>
    Utils <api/utils>
    Threading <api/threading>
    Triggers <api/triggers/index>
