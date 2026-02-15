@@ -29,42 +29,42 @@ thread pool.
 .. code-block:: python
 
    import time
-  from concurrent.futures import TimeoutError
+   from concurrent.futures import TimeoutError
 
-  from schedium import Every, Job, JobDidNotRun, Scheduler
+   from schedium import Every, Job, JobDidNotRun, Scheduler
    from schedium.threading import ThreadedJobsScheduler
 
    sched = Scheduler()
 
    def cpu_or_io_work() -> str:
-       # Your job code
-       return "ok"
+      # Your job code
+      return "ok"
 
    sched.append(Job(cpu_or_io_work, Every(unit="second", interval=1)))
 
    threaded = ThreadedJobsScheduler(sched, max_workers=8)
    try:
-       while True:
-            futures = threaded.run_pending(wait=False)
+      while True:
+         futures = threaded.run_pending(wait=False)
 
-            for fut in futures:
-                if fut is JobDidNotRun:
-                    continue
+         for fut in futures:
+            if fut is JobDidNotRun:
+               continue
 
-                # Non-blocking check: fut.result(timeout=0) either returns immediately
-                # or raises TimeoutError.
-                try:
-                    value = fut.result(timeout=0)
-                except TimeoutError:
-                    continue
-                except Exception as exc:
-                    print(f"job failed: {exc!r}")
-                else:
-                    print(f"job returned: {value!r}")
+         # Non-blocking check: fut.result(timeout=0) either returns immediately
+         # or raises TimeoutError.
+         try:
+            value = fut.result(timeout=0)
+         except TimeoutError:
+            continue
+         except Exception as exc:
+            print(f"job failed: {exc!r}")
+         else:
+            print(f"job returned: {value!r}")
 
-            time.sleep(1)
+         time.sleep(1)
    finally:
-       threaded.shutdown()
+      threaded.shutdown()
 
 
 SchedulerThread (scheduler loop in background thread)
