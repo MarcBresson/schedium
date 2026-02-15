@@ -124,9 +124,24 @@ class Job:
         if event == self.last_event:
             raise RuntimeError("Job.run() called but job already ran for this token")
 
-        result = self.func()
+        result = self.run_func()
         self.last_event = event
         return result
+
+    def run_func(self) -> object:
+        """
+        Run the job's callable without checking triggers or updating state.
+
+        Particularly useful to override in subclasses that want to customize
+        the run behavior while keeping the same trigger-based scheduling
+        logic.
+
+        Returns
+        -------
+        object
+            The callable's return value.
+        """
+        return self.func()
 
     def datetime_of_next_run(
         self,
