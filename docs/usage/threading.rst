@@ -51,18 +51,18 @@ thread pool.
             if fut is JobDidNotRun:
                continue
 
-         # Non-blocking check: fut.result(timeout=0) either returns immediately
-         # or raises TimeoutError.
-         try:
-            value = fut.result(timeout=0)
-         except TimeoutError:
-            continue
-         except Exception as exc:
-            print(f"job failed: {exc!r}")
-         else:
-            print(f"job returned: {value!r}")
+            # Non-blocking check: fut.result(timeout=0) either returns immediately
+            # or raises TimeoutError.
+            try:
+                value = fut.result(timeout=0)
+            except TimeoutError:
+                continue
+            except Exception as exc:
+                print(f"job failed: {exc!r}")
+            else:
+                print(f"job returned: {value!r}")
 
-         time.sleep(1)
+        time.sleep(1)
    finally:
       threaded.shutdown()
 
