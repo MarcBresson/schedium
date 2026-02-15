@@ -30,8 +30,9 @@ The ``next_window(after)`` contract is:
 - Returns ``None`` if the trigger can never match at or after ``after``.
 - Otherwise returns a window where:
 
-  - ``window.start >= after`` OR the trigger is already satisfied at ``after``
-    (in which case ``window.start == after``), and
+  - ``window.start >= after``.
+    Some triggers may return ``window.start == after`` when already satisfied
+    at ``after``.
   - for all ``t`` in the interval ``[window.start, window.end]`` (or unbounded),
     the trigger is considered satisfied.
 
