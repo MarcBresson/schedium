@@ -30,7 +30,7 @@ Most Python schedulers either require a background thread / daemon or force you 
 - **Automatic deduplication** — calling `run_pending()` multiple times within the same time bucket is safe; jobs run at most once per bucket.
 - **Zero dependencies** — pure Python, nothing outside the standard library.
 - **Fully typed** — first-class type annotations and mypy-checked.
-- support all currently maintained python versions: 3.10, 3.11, 3.12, 3.13, and 3.14
+- **Supports all currently maintained Python versions**: 3.10, 3.11, 3.12, 3.13, and 3.14.
 
 [link to the documentation](https://schedium.readthedocs.io)
 
@@ -60,6 +60,32 @@ sched.append(Job(hello, Weekly("monday", at="09:30"), name="weekly"))
 while True:
     sched.run_pending()
     time.sleep(1)
+```
+
+## Threading (optional)
+
+schedium runs jobs inline by default. If you want multi-threading, use the helpers in
+`schedium.threading`:
+
+- `ThreadedJobsScheduler`: runs each *due* job on a worker thread (thread pool).
+- `QueuedJobsScheduler`: keeps the scheduler in your thread and enqueues due jobs for worker threads.
+- `SchedulerThread`: runs the scheduler loop itself in a dedicated thread.
+
+```python
+from schedium import Every, Job, Scheduler
+from schedium.threading import SchedulerThread, ThreadedJobsScheduler
+
+sched = Scheduler()
+sched.append(Job(lambda: print("tick"), Every(unit="second", interval=1)))
+
+threaded = ThreadedJobsScheduler(sched, max_workers=8)
+runner = SchedulerThread(threaded, interval=1.0)
+runner.start()
+
+# ... later
+runner.stop()
+runner.join()
+threaded.shutdown()
 ```
 
 ## Composing triggers
