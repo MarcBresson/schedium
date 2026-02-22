@@ -141,6 +141,25 @@ Useful details:
    trigger = Weekly(1, at=time(9, 30, 15))
    trigger = Weekly("thu", at="09:00", force_0_minute=True)
 
+Daily (helper)
+^^^^^^^^^^^^^^
+
+:func:`~schedium.triggers.sugar.daily.Daily` is a convenience helper that
+builds a composed trigger for “daily, optionally at a time”.
+
+Useful details:
+
+- ``at`` accepts ``HH:MM`` and also ``HH:MM:SS[.mmm]``.
+
+.. code-block:: python
+
+   from datetime import time
+   from schedium import Daily
+
+   trigger = Daily()
+   trigger = Daily(at="09:30")
+   trigger = Daily(at=time(9, 30, 15))
+
 Composing triggers (AND / OR)
 -----------------------------
 
@@ -216,4 +235,5 @@ Direct links:
 - :doc:`Between <../api/triggers/between>`
 - :doc:`BetweenDateTime / AtDateTime <../api/triggers/datetime>`
 - :doc:`Combinators (AND/OR) <../api/triggers/combinators>`
+- :doc:`Daily <../api/triggers/daily>`
 - :doc:`Weekly <../api/triggers/weekly>`

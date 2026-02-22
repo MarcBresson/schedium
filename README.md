@@ -123,6 +123,7 @@ trigger = (
 | `Between(unit, start, end)` | Range constraint (inclusive) | `Between(unit="hour_of_day", start=9, end=17)` |
 | `AtDateTime(run_date)` | One-shot at a specific datetime | `AtDateTime(datetime(2026, 3, 1, 12, 0))` |
 | `BetweenDateTime(start, end)` | Datetime window constraint | `BetweenDateTime(start_date=..., end_date=...)` |
+| `Daily(at=...)` | Convenience: daily (optionally at a time) | `Daily(at="09:30")` |
 | `Weekly(day, at=...)` | Convenience: weekly on a weekday | `Weekly("mon", at="09:30")` |
 | `trigger_a & trigger_b` | AND combinator | All conditions must match |
 | `trigger_a \| trigger_b` | OR combinator | Either condition can match |

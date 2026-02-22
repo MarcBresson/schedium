@@ -13,4 +13,5 @@ This section documents the trigger primitives and helpers available in schedium.
    between <between>
    datetime <datetime>
    combinators <combinators>
+   daily <daily>
    weekly <weekly>

@@ -14,7 +14,7 @@ from schedium.triggers.datetime import (
 )
 from schedium.triggers.every import Every
 from schedium.triggers.on import On
-from schedium.triggers.sugar.weekly import Weekly
+from schedium.triggers.sugar import Daily, Weekly
 from schedium.types.time_window import TimeWindow
 
 __all__ = [
@@ -24,6 +24,7 @@ __all__ = [
     "BaseCombinatorTrigger",
     "Between",
     "BetweenDateTime",
+    "Daily",
     "Every",
     "On",
     "OrTrigger",
