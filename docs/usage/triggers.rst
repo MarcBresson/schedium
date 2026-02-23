@@ -121,7 +121,7 @@ datetime, even if the scheduler starts late.
 Weekly (helper)
 ^^^^^^^^^^^^^^^
 
-:func:`~schedium.triggers.sugar.weekly.Weekly` is a convenience helper that
+:func:`~schedium.triggers.Weekly` is a convenience helper that
 builds a composed trigger for “weekly on weekday X, optionally at a time”.
 
 Useful details:
@@ -144,7 +144,7 @@ Useful details:
 Daily (helper)
 ^^^^^^^^^^^^^^
 
-:func:`~schedium.triggers.sugar.daily.Daily` is a convenience helper that
+:func:`~schedium.triggers.Daily` is a convenience helper that
 builds a composed trigger for “daily, optionally at a time”.
 
 Useful details:
