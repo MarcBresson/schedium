@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__version__ = "0.0.0"
+__version__ = "0.1.0"
 
 from .job import Job
 from .scheduler import JobDidNotRun, Scheduler
