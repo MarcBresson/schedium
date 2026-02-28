@@ -42,6 +42,21 @@ Quick start
       sched.run_pending()
       time.sleep(1)
 
+You can also use the default scheduler for quick tasks:
+
+.. code-block:: python
+
+   from schedium import add_job, run_pending, Every
+
+   def hello():
+      print("hello")
+
+   add_job(hello, Every(unit="minute", interval=5), name="hello")
+
+   while True:
+      run_pending()
+      time.sleep(1)
+
 Contents
 --------
 
@@ -64,6 +79,7 @@ Contents
    :maxdepth: 2
    :caption: API Reference
 
+   Default Scheduler <api/default>
    Scheduler <api/scheduler>
    Job <api/job>
    Exceptions <api/exceptions>
