@@ -20,7 +20,7 @@ from .triggers import (
 from .triggers.sugar.tick import Tick
 from .types.cancel_job import CancelJob
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "add_job",
