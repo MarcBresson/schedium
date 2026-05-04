@@ -34,8 +34,8 @@ Quick start
        print("hello")
 
    print_hello_job = Job(hello, Every(unit="minute", interval=5), name="hello")
-   print_hello_job_weekly = Job(hello, Weekly("monday", at="08:00"), name="hello")
    sched.append(print_hello_job)
+   print_hello_job_weekly = Job(hello, Weekly("monday", at="08:00"), name="hello")
    sched.append(print_hello_job_weekly)
 
    while True:
