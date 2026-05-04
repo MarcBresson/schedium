@@ -42,7 +42,7 @@ dev = [
     "ipython",
 ]
 docs = [
-  "sphinx>=7",
+  "sphinx>=7,<9",
   "furo>=2025.12.19",
   "numpydoc>=1.10.0",
   "sphinx_copybutton>=0.5.2",
