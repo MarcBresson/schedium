@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import pytest
 from datetime import datetime
 
 from schedium import Between, Every, Job, On, Scheduler
+from schedium.triggers.base import _add_months
 
 
 def test_every_2_hours_alignment():
@@ -53,3 +55,30 @@ def test_second_and_millisecond_granularity_dedup():
     # Next millisecond changes the ms bucket; should run again.
     sched.run_pending(now=datetime(2026, 2, 4, 10, 0, 1, 2000))
     assert ran_ms == [1, 1, 1]
+
+
+def test_on_matches_raises_for_unknown_unit():
+    on = On(unit="hour_of_day", value=8)
+    on.unit = "nonexistent_unit"  # type: ignore[assignment]
+    with pytest.raises(ValueError):
+        on.matches(datetime(2026, 1, 1, 8, 0))
+
+
+def test_add_months_jan_31_to_feb_clamps_to_28():
+    result = _add_months(datetime(2026, 1, 31, 12, 0), 1)
+    assert result == datetime(2026, 2, 28, 12, 0)
+
+
+def test_add_months_jan_30_to_feb_clamps_to_28():
+    result = _add_months(datetime(2026, 1, 30, 6, 0), 1)
+    assert result == datetime(2026, 2, 28, 6, 0)
+
+
+def test_add_months_jan_29_to_feb_clamps_to_28():
+    result = _add_months(datetime(2026, 1, 29, 0, 0), 1)
+    assert result == datetime(2026, 2, 28, 0, 0)
+
+
+def test_add_months_leap_year_jan_31_to_feb_clamps_to_29():
+    result = _add_months(datetime(2024, 1, 31, 0, 0), 1)
+    assert result == datetime(2024, 2, 29, 0, 0)

@@ -96,33 +96,60 @@ class On(BaseTrigger):
     def fallback_granularity(self) -> Granularity:
         return self.granularity
 
-    def matches(self, now: datetime) -> bool:  # pyright: ignore[reportReturnType]
+    def matches(self, now: datetime) -> bool:
         if self.unit == "weekdays":
             return now.weekday() < 5
-        if self.unit == "weekend_days":
+        elif self.unit == "weekend_days":
             return now.weekday() >= 5
-
-        assert self.value is not None, f"value must be provided for unit {self.unit!r}"
-        if self.unit == "year":
+        elif self.unit == "year":
+            assert self.value is not None, (
+                f"value must be provided for unit {self.unit!r}"
+            )
             return now.year == self.value
-        if self.unit == "month_of_year":
+        elif self.unit == "month_of_year":
+            assert self.value is not None, (
+                f"value must be provided for unit {self.unit!r}"
+            )
             return now.month == self.value
-        if self.unit == "week_of_year":
+        elif self.unit == "week_of_year":
+            assert self.value is not None, (
+                f"value must be provided for unit {self.unit!r}"
+            )
             return now.isocalendar().week == self.value
-        if self.unit == "day_of_week":
+        elif self.unit == "day_of_week":
+            assert self.value is not None, (
+                f"value must be provided for unit {self.unit!r}"
+            )
             if 1 <= self.value <= 7:
                 return now.isoweekday() == self.value
             raise ValueError("day_of_week must be in 1..7 (iso)")
-        if self.unit == "day_of_month":
+        elif self.unit == "day_of_month":
+            assert self.value is not None, (
+                f"value must be provided for unit {self.unit!r}"
+            )
             return now.day == self.value
-        if self.unit == "hour_of_day":
+        elif self.unit == "hour_of_day":
+            assert self.value is not None, (
+                f"value must be provided for unit {self.unit!r}"
+            )
             return now.hour == self.value
-        if self.unit == "minute_of_hour":
+        elif self.unit == "minute_of_hour":
+            assert self.value is not None, (
+                f"value must be provided for unit {self.unit!r}"
+            )
             return now.minute == self.value
-        if self.unit == "second_of_minute":
+        elif self.unit == "second_of_minute":
+            assert self.value is not None, (
+                f"value must be provided for unit {self.unit!r}"
+            )
             return now.second == self.value
-        if self.unit == "millisecond_of_second":
+        elif self.unit == "millisecond_of_second":
+            assert self.value is not None, (
+                f"value must be provided for unit {self.unit!r}"
+            )
             return (now.microsecond // 1000) == self.value
+        else:
+            raise ValueError(f"Unknown unit: {self.unit!r}")
 
     def next_window(
         self,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import calendar
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -21,7 +22,8 @@ def _add_months(dt: datetime, months: int) -> datetime:
     month0 = (dt.year * 12 + (dt.month - 1)) + months
     year = month0 // 12
     month = (month0 % 12) + 1
-    return dt.replace(year=year, month=month)
+    max_day = calendar.monthrange(year, month)[1]
+    return dt.replace(year=year, month=month, day=min(dt.day, max_day))
 
 
 def _increment(dt: datetime, granularity: Granularity) -> datetime:

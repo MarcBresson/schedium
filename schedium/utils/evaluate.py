@@ -34,17 +34,24 @@ def _effective_granularity(trigger: BaseTrigger) -> Granularity:
     return Granularity.SECOND
 
 
+def _find_at_datetime(t: BaseTrigger) -> AtDateTime | None:
+    if isinstance(t, AtDateTime):
+        return t
+    if isinstance(t, BaseCombinatorTrigger):
+        for child in t.triggers:
+            found = _find_at_datetime(child)
+            if found is not None:
+                return found
+    return None
+
+
 def evaluate(trigger: BaseTrigger, now: datetime) -> TriggerEvent | None:
     if not trigger.matches(now):
         return None
 
-    if isinstance(trigger, AtDateTime):
-        return TriggerEvent(token=("at", trigger.run_date))
-
-    if isinstance(trigger, BaseCombinatorTrigger):
-        for t in trigger.triggers:
-            if isinstance(t, AtDateTime):
-                return TriggerEvent(token=("at", t.run_date))
+    at_dt = _find_at_datetime(trigger)
+    if at_dt is not None:
+        return TriggerEvent(token=("at", at_dt.run_date))
 
     gran = _effective_granularity(trigger)
     return TriggerEvent(token=("bucket", gran, truncate(now, gran)))
