@@ -59,12 +59,12 @@ class BetweenDateTime(BaseTrigger):
     """
 
     def __init__(self, start_date: datetime, end_date: datetime):
+        if start_date > end_date:
+            raise ValueError("start_date must be <= end_date")
         self.start_date = start_date
         self.end_date = end_date
 
     def matches(self, now: datetime) -> bool:
-        if self.start_date > self.end_date:
-            raise ValueError("start_date must be <= end_date")
         return self.start_date <= now <= self.end_date
 
     def fallback_granularity(self) -> Granularity:
@@ -76,9 +76,6 @@ class BetweenDateTime(BaseTrigger):
         *,
         max_iterations: int = 100_000,
     ) -> TimeWindow | None:
-        if self.start_date > self.end_date:
-            raise ValueError("start_date must be <= end_date")
-
         if after > self.end_date:
             return None
 

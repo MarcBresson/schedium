@@ -89,6 +89,8 @@ class On(BaseTrigger):
         unit: OnUnit,
         value: int | None = None,
     ):
+        if unit == "day_of_week" and value is not None and not (1 <= value <= 7):
+            raise ValueError("day_of_week must be in 1..7 (iso)")
         self.unit: OnUnit = unit
         self.value = value
         self.granularity = _parse_unit(unit)
@@ -120,9 +122,7 @@ class On(BaseTrigger):
             assert self.value is not None, (
                 f"value must be provided for unit {self.unit!r}"
             )
-            if 1 <= self.value <= 7:
-                return now.isoweekday() == self.value
-            raise ValueError("day_of_week must be in 1..7 (iso)")
+            return now.isoweekday() == self.value
         elif self.unit == "day_of_month":
             assert self.value is not None, (
                 f"value must be provided for unit {self.unit!r}"
@@ -199,11 +199,11 @@ class On(BaseTrigger):
 
 
 def _parse_unit(unit: OnUnit) -> Granularity:
-    if unit in {"year"}:
+    if unit == "year":
         return Granularity.YEAR
-    if unit in {"month_of_year"}:
+    if unit == "month_of_year":
         return Granularity.MONTH
-    if unit in {"week_of_year"}:
+    if unit == "week_of_year":
         return Granularity.WEEK
     if unit in {"day_of_week", "day_of_month", "weekdays", "weekend_days"}:
         return Granularity.DAY

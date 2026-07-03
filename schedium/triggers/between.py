@@ -98,6 +98,8 @@ class Between(BaseTrigger):
         start: int,
         end: int,
     ):
+        if start > end:
+            raise ValueError("start must be <= end")
         self.unit = unit
         self.start = start
         self.end = end
@@ -122,9 +124,6 @@ class Between(BaseTrigger):
         return Granularity.DAY
 
     def matches(self, now: datetime) -> bool:
-        if self.start > self.end:
-            raise ValueError("start must be <= end")
-
         if self.unit == "year":
             v = now.year
         elif self.unit == "month_of_year":
@@ -158,9 +157,6 @@ class Between(BaseTrigger):
         *,
         max_iterations: int = 100_000,
     ) -> TimeWindow | None:
-        if self.start > self.end:
-            raise ValueError("start must be <= end")
-
         # Year range can be computed without scanning.
         if self.unit == "year":
             if after.year > self.end:
