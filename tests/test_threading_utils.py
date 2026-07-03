@@ -185,3 +185,38 @@ def test_queued_jobs_scheduler_removes_cancelled_job():
         assert sched.jobs == []
     finally:
         queued.stop_workers(join=True, timeout=1.0)
+
+
+def test_threaded_jobs_property_returns_copy():
+    sched = Scheduler()
+    threaded = ThreadedJobsScheduler(sched, max_workers=1)
+    threaded.append(Job(lambda: None, Tick("second")))
+
+    snapshot = threaded.jobs
+    snapshot.clear()  # mutate the returned list
+
+    # Before the fix .jobs returned the raw scheduler list; clear() would have
+    # emptied it.  After the fix it returns a copy, so the scheduler is intact.
+    assert len(threaded.jobs) == 1
+    threaded.shutdown(wait=True)
+
+
+def test_queued_jobs_property_returns_copy():
+    sched = Scheduler()
+    queued = QueuedJobsScheduler(sched, worker_count=1)
+    queued.append(Job(lambda: None, Tick("second")))
+
+    snapshot = queued.jobs
+    snapshot.clear()
+
+    assert len(queued.jobs) == 1
+    queued.stop_workers(join=True)
+
+
+def test_scheduler_thread_has_run_loop_method():
+    sched = Scheduler()
+    runner = SchedulerThread(sched)
+
+    # Before the fix _run_loop was a local closure inside start() and did not
+    # exist as an attribute.  After the fix it is a proper method.
+    assert callable(getattr(runner, "_run_loop", None))

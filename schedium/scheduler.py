@@ -5,6 +5,7 @@ from datetime import datetime
 
 from schedium.job import Job
 from schedium.types.cancel_job import CancelJob
+from schedium.utils.evaluate import evaluate
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +84,7 @@ class Scheduler:
     datetime.datetime(2026, 2, 3, 8, 0)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.jobs: list[Job] = []
 
     def append(self, job: Job) -> None:
@@ -98,7 +99,7 @@ class Scheduler:
 
         self.jobs.append(job)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: int) -> Job:
         return self.jobs[item]
 
     def run_pending(self, now: datetime | None = None) -> list[object]:
@@ -127,11 +128,13 @@ class Scheduler:
         # Iterate over a snapshot so results align with the jobs that were
         # present at the start of this call.
         for job in list(self.jobs):
-            if not job.is_due(now_dt):
+            event = evaluate(job.trigger, now_dt)
+            if event is None or event == job.last_event:
                 results.append(JobDidNotRun)
                 continue
 
-            result = job.run(now_dt)
+            result = job.run_func()
+            job.last_event = event
             results.append(result)
 
             if isinstance(result, CancelJob):

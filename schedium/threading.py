@@ -126,8 +126,8 @@ class ThreadedJobsScheduler:
     @property
     def jobs(self) -> list[Job]:
         """Access the underlying job list."""
-
-        return self.scheduler.jobs
+        with self._lock:
+            return list(self.scheduler.jobs)
 
     def shutdown(self, *, wait: bool = True, cancel_futures: bool = False) -> None:
         """
@@ -378,7 +378,8 @@ class QueuedJobsScheduler:
 
     @property
     def jobs(self) -> list[Job]:
-        return self.scheduler.jobs
+        with self._lock:
+            return list(self.scheduler.jobs)
 
     def _worker_loop(self) -> None:
         while True:
@@ -600,6 +601,20 @@ class SchedulerThread:
         self._thread: threading.Thread | None = None
         self.exception: BaseException | None = None
 
+    def _run_loop(self) -> None:
+        try:
+            while not self._stop_event.is_set():
+                now = self.now_func() if self.now_func is not None else None
+                if isinstance(self.scheduler, ThreadedJobsScheduler):
+                    self.scheduler.run_pending(now=now, wait=False)
+                else:
+                    self.scheduler.run_pending(now=now)
+
+                time.sleep(self.interval)
+        except BaseException as exc:
+            self.exception = exc
+            raise
+
     def start(self) -> None:
         if self._thread is not None and self._thread.is_alive():
             return
@@ -607,22 +622,8 @@ class SchedulerThread:
         self._stop_event.clear()
         self.exception = None
 
-        def _loop() -> None:
-            try:
-                while not self._stop_event.is_set():
-                    now = self.now_func() if self.now_func is not None else None
-                    if isinstance(self.scheduler, ThreadedJobsScheduler):
-                        self.scheduler.run_pending(now=now, wait=False)
-                    else:
-                        self.scheduler.run_pending(now=now)
-
-                    time.sleep(self.interval)
-            except BaseException as exc:
-                self.exception = exc
-                raise
-
         self._thread = threading.Thread(
-            target=_loop, name=self.name, daemon=self.daemon
+            target=self._run_loop, name=self.name, daemon=self.daemon
         )
         self._thread.start()
 

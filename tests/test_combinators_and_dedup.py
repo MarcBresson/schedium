@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 
 from schedium import Every, Job, On, Scheduler
+from schedium.triggers.base import BaseTrigger
+from schedium.types.granularity import Granularity
 
 
 def test_or_on_minutes():
@@ -36,3 +38,26 @@ def test_scheduler_dedupplication_bucket():
 
     sched.run_pending(now=datetime(2026, 2, 4, 10, 1, 0))
     assert ran == [1, 1]
+
+
+def test_run_pending_evaluates_trigger_once_per_job():
+    class CountingTrigger(BaseTrigger):
+        def __init__(self) -> None:
+            self.match_count = 0
+
+        def matches(self, now: datetime) -> bool:
+            self.match_count += 1
+            return True
+
+        def fallback_granularity(self) -> Granularity:
+            return Granularity.SECOND
+
+    trigger = CountingTrigger()
+    sched = Scheduler()
+    sched.append(Job(lambda: None, trigger))
+
+    sched.run_pending(now=datetime(2026, 2, 4, 10, 0, 0))
+
+    # Before the fix run_pending called is_due() then run(), each calling
+    # evaluate() → trigger.matches(). That doubled the call count to 2.
+    assert trigger.match_count == 1
