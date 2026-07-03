@@ -46,7 +46,7 @@ from schedium.triggers.base import BaseTrigger
 default_scheduler = Scheduler()
 
 
-def run_pending():
+def run_pending() -> None:
     default_scheduler.run_pending()
 
 
@@ -64,9 +64,10 @@ def add_job(
     job: Job | Callable[[], object],
     trigger: BaseTrigger | None = None,
     name: str | None = None,
-):
+) -> None:
     if not isinstance(job, Job):
-        assert trigger is not None
+        if trigger is None:
+            raise ValueError("trigger must be provided when job is not a Job instance")
         job = Job(job, trigger=trigger, name=name)
     default_scheduler.append(job)
 
