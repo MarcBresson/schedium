@@ -228,7 +228,7 @@ pre-commit run --all-files
 Contributions are welcome! Please:
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/my-feature`)
+2. Create a feature branch (`git switch -c feature/my-feature`)
 3. Ensure all tests pass (`pytest`) and pre-commit hooks are clean
 4. Open a pull request
 
