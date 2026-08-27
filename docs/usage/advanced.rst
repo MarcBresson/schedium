@@ -10,6 +10,7 @@ Guide map
 - :doc:`timezone` — recommendations for UTC-aware scheduling and DST caveats.
 - :doc:`exceptions` — failure behavior, retry semantics, and cancellation helpers.
 - :doc:`threading` — run jobs concurrently with thread pools/queues.
+- :doc:`asyncio` — run jobs on an asyncio event loop.
 
 When to use this section
 ------------------------
@@ -28,3 +29,4 @@ Use these guides if you need one or more of the following:
    Timezone <timezone>
    Exceptions <exceptions>
    Threading <threading>
+   Asyncio <asyncio>

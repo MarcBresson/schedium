@@ -215,6 +215,7 @@ schedium computes future schedules using window time:
 
 - Each trigger implements ``next_window(after) -> TimeWindow | None``.
 - A job’s next run time is ``window.start``.
+- When triggers are composed, the next window is computed by intersecting or unioning the component windows.
 
 See the Concepts pages for details:
 

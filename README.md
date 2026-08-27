@@ -25,9 +25,9 @@
 
 Most Python schedulers either require a background thread / daemon or force you into a rigid cron syntax. **schedium** takes a different approach:
 
-- **No threads, no processes** — jobs run inline when you call `run_pending()`.
-- **Composable triggers** — build complex schedules by combining simple primitives with `&` (AND) and `|` (OR).
-- **Automatic deduplication** — calling `run_pending()` multiple times within the same time bucket is safe; jobs run at most once per bucket.
+- **No threads, no processes** — jobs run inline when you call `run_pending()`. They can be ran in [threads](https://schedium.readthedocs.io/en/latest/usage/threading.html) or [asynchronously](https://schedium.readthedocs.io/en/latest/usage/asyncios.html) using helpers.
+- **Composable triggers** — build complex schedules by combining simple primitives with `&` (AND) and `|` (OR). See [`composing triggers` doc](https://schedium.readthedocs.io/en/latest/usage/triggers.html#composing-triggers-and-or)
+- **Automatic deduplication** — calling `run_pending()` multiple times within the same time bucket is safe; jobs run at most once per bucket. See [`deduplication` doc](https://schedium.readthedocs.io/en/latest/concepts/trigger_tokens.html#trigger-tokens-deduplication)
 - **Zero dependencies** — pure Python, nothing outside the standard library.
 - **Fully typed** — first-class type annotations and mypy-checked.
 - **Supports all currently maintained Python versions**: 3.10, 3.11, 3.12, 3.13, and 3.14.
@@ -86,6 +86,28 @@ runner.start()
 runner.stop()
 runner.join()
 threaded.shutdown()
+```
+
+## Async (optional)
+
+For `asyncio` applications, use `schedium.asyncio.AsyncScheduler`. It is used the
+same way as `Scheduler`, but runs due jobs on the event loop — `async def` jobs are
+awaited directly, plain sync jobs run in an executor so they never block the loop.
+
+```python
+import asyncio
+from schedium import Every, Job
+from schedium.asyncio import AsyncScheduler
+
+async_sched = AsyncScheduler()
+async_sched.append(Job(lambda: print("tick"), Every(unit="second", interval=1)))
+
+async def main():
+    while True:
+        await async_sched.run_pending()
+        await asyncio.sleep(1)
+
+asyncio.run(main())
 ```
 
 ## Composing triggers

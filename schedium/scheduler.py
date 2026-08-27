@@ -6,6 +6,7 @@ from datetime import datetime
 from schedium.job import Job
 from schedium.types.cancel_job import CancelJob
 from schedium.utils.evaluate import evaluate
+from schedium.utils.time_of_next_run import time_of_next_run as _time_of_next_run
 
 logger = logging.getLogger(__name__)
 
@@ -171,15 +172,7 @@ class Scheduler:
         max_iterations : int, default 100_000
             Safety cap used by some triggers/combinators that scan forward.
         """
-        if after is None:
-            after = datetime.now()
-
-        next_runs: list[datetime] = []
-        for job in self.jobs:
-            next_run = job.datetime_of_next_run(after, max_iterations=max_iterations)
-            if next_run is not None:
-                next_runs.append(next_run)
-        return min(next_runs) if next_runs else None
+        return _time_of_next_run(self.jobs, after, max_iterations=max_iterations)
 
     def __repr__(self) -> str:
         return f"Scheduler(jobs={self.jobs!r})"
