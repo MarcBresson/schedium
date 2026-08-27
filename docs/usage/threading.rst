@@ -18,6 +18,8 @@ When to use which
 - Use :class:`~schedium.threading.QueuedJobsScheduler` when you want scheduling
   decisions to stay synchronous (in your thread), while job execution is handled by
   one or more worker threads consuming a queue.
+- If your application is built on ``asyncio`` rather than threads, use
+  :class:`~schedium.asyncio.AsyncScheduler` instead -- see :doc:`asyncio`.
 
 
 ThreadedJobsScheduler (thread pool)

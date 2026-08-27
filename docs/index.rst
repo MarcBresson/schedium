@@ -85,6 +85,7 @@ Contents
    Exceptions <api/exceptions>
    Utils <api/utils>
    Threading <api/threading>
+   Asyncio <api/asyncio>
    Triggers <api/triggers/index>
 
 .. toctree::
