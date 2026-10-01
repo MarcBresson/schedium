@@ -1,14 +1,114 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import time
 from datetime import datetime
+from functools import partial
 
 import pytest
 
 from schedium import CancelJob, Job, Tick
 from schedium.asyncio import AsyncScheduler
 from schedium.scheduler import JobDidNotRunType
+
+
+@pytest.mark.parametrize("kind", ["callable", "partial", "wrapper"])
+@pytest.mark.parametrize("wait", [True, False])
+def test_async_scheduler_awaits_callable_results(kind, wait):
+    async def scenario():
+        loop = asyncio.get_running_loop()
+        calls = 0
+
+        async def work():
+            nonlocal calls
+            assert asyncio.get_running_loop() is loop
+            await asyncio.sleep(0)
+            calls += 1
+            return "done"
+
+        class AsyncCallable:
+            async def __call__(self):
+                return await work()
+
+        if kind == "callable":
+            func = AsyncCallable()
+        elif kind == "partial":
+            func = partial(AsyncCallable())
+        else:
+
+            def func():
+                return work()
+
+        async_sched = AsyncScheduler()
+        async_sched.append(Job(func, Tick("second")))
+        now = datetime(2026, 2, 12, 12, 0, 0)
+        results = await async_sched.run_pending(now=now, wait=wait)
+        result = results[0] if wait else await results[0]
+        if inspect.iscoroutine(result):
+            result.close()
+
+        assert result == "done"
+        assert calls == 1
+        repeated = await async_sched.run_pending(now=now, wait=wait)
+        assert isinstance(repeated[0], JobDidNotRunType)
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("wait", [True, False])
+def test_async_scheduler_removes_wrapped_async_cancelled_job(wait):
+    async def scenario():
+        async def cancel_me():
+            return CancelJob("done")
+
+        async_sched = AsyncScheduler()
+        async_sched.append(Job(lambda: cancel_me(), Tick("second")))
+        results = await async_sched.run_pending(
+            now=datetime(2026, 2, 12, 12, 0, 0), wait=wait
+        )
+        result = results[0] if wait else await results[0]
+        if inspect.iscoroutine(result):
+            result.close()
+
+        assert isinstance(result, CancelJob)
+        assert result.reason == "done"
+        await asyncio.sleep(0)
+        assert async_sched.jobs == []
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("wait", [True, False])
+def test_async_scheduler_retries_wrapped_async_failure(wait):
+    async def scenario():
+        calls = 0
+
+        async def work():
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise ValueError("job failed")
+            return "recovered"
+
+        async_sched = AsyncScheduler(revert_last_event_on_failure=True)
+        job = Job(lambda: work(), Tick("second"))
+        async_sched.append(job)
+        now = datetime(2026, 2, 12, 12, 0, 0)
+
+        with pytest.raises(ValueError, match="job failed"):
+            results = await async_sched.run_pending(now=now, wait=wait)
+            result = results[0] if wait else await results[0]
+            if inspect.iscoroutine(result):
+                result.close()
+
+        await asyncio.sleep(0)
+        assert job.last_event is None
+        results = await async_sched.run_pending(now=now, wait=wait)
+        assert (results[0] if wait else await results[0]) == "recovered"
+        assert calls == 2
+
+    asyncio.run(scenario())
 
 
 def test_async_scheduler_runs_due_jobs_concurrently():

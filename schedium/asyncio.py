@@ -5,7 +5,7 @@ Async-capable scheduler helpers.
 you would use :class:`~schedium.scheduler.Scheduler` -- and runs due jobs on the
 current event loop. ``async def`` job functions are awaited directly; plain
 synchronous job functions are offloaded to the default executor so they never
-block the loop.
+block the loop. Awaitable results from these callables are awaited on the event loop.
 
 To run the scheduler loop itself in the background, use a plain
 :func:`asyncio.create_task` -- see :doc:`/usage/asyncio` for the pattern.
@@ -35,7 +35,10 @@ async def _run_job_func(job: Job) -> object:
         return await job.func()
 
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, job.func)
+    result = await loop.run_in_executor(None, job.func)
+    if inspect.isawaitable(result):
+        return await result
+    return result
 
 
 def _claim_due_event(
@@ -94,6 +97,7 @@ class AsyncScheduler:
     - ``async def`` job functions are awaited directly on the event loop. Plain
       synchronous job functions run in the default executor (a thread pool) via
       :meth:`asyncio.loop.run_in_executor`, so they never block the event loop.
+      Any awaitable they return is then awaited on the event loop.
 
     Parameters
     ----------
