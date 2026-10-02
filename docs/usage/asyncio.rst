@@ -95,6 +95,55 @@ The scheduler decides how to call a job function as follows:
    is *not* awaited a second time. Likewise, a synchronous function cannot return a
    task or future "as a value": it is awaited, and the job's result is the awaited value.
 
+Refusing synchronous jobs
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Falling back to a worker thread is convenient, but it is easy to trigger by
+accident: forget the ``async`` keyword on a job function, or wrap a coroutine
+function in a decorator that is not itself ``async``, and the job silently moves
+off the event loop. Anything it shares with the loop (HTTP clients, database
+sessions, caches, thread-affine resources) is then used from another thread, which
+tends to fail intermittently and far from the cause.
+
+If you want a guarantee that every job runs on the event loop, create the
+scheduler with ``require_async_jobs=True``. The thread pool is then never used, and
+any job whose callable is not known to be async is rejected with
+:class:`~schedium.exceptions.SyncJobNotAllowed` (a :class:`TypeError`):
+
+.. code-block:: python
+
+   from schedium.exceptions import SyncJobNotAllowed
+
+   async_sched = AsyncScheduler(require_async_jobs=True)
+
+   async_sched.append(Job(io_bound_work, Every(unit="second", interval=1)))  # ok
+
+   try:
+       async_sched.append(Job(cpu_or_blocking_work, Every(unit="second", interval=1)))
+   except SyncJobNotAllowed:
+       ...  # not an async callable: refused, and never run in a thread
+
+Details worth knowing:
+
+- The check happens in :meth:`~schedium.asyncio.AsyncScheduler.append`, so the
+  mistake shows up where the job is registered rather than the first time it is due.
+  It is repeated when the job is about to run, to catch jobs put directly into
+  ``async_sched.jobs`` or whose ``func`` was swapped afterwards. In that case the
+  error is handled like any other job failure: raised from ``run_pending`` with
+  ``wait=True``, or logged with ``wait=False``.
+- A callable only counts as async if it can be recognised without calling it:
+  ``async def`` functions and callable objects with an ``async def __call__``, also
+  inside :func:`functools.partial`. A synchronous function that *returns* a
+  coroutine, such as ``lambda: fetch(url)``, is rejected too: telling it apart
+  from a blocking function would require calling it, which is exactly the thread
+  hop this flag exists to prevent. Write ``async def`` wrappers instead
+  (``async def poll(): return await fetch(url)``).
+- ``await_awaitable_results`` has no effect with this option, as no synchronous
+  job is ever called.
+- It is off by default so that blocking jobs keep working out of the box. Leave it
+  off if you rely on the thread offloading; turn it on if you consider a
+  synchronous job in an asyncio scheduler to be a bug.
+
 Limiting concurrency
 ~~~~~~~~~~~~~~~~~~~~~
 
