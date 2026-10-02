@@ -11,6 +11,7 @@ import pytest
 from schedium import CancelJob, Job, Tick
 from schedium import asyncio as asyncio_utils
 from schedium.asyncio import AsyncScheduler
+from schedium.exceptions import SyncJobNotAllowed
 from schedium.scheduler import JobDidNotRunType
 
 
@@ -408,5 +409,56 @@ def test_background_loop_task_survives_a_failing_job_when_not_waiting():
         task.cancel()
         with pytest.raises(asyncio.CancelledError):
             await task
+
+    asyncio.run(scenario())
+
+
+def _sync_job_variants():
+    async def work():
+        return "done"
+
+    class SyncCallable:
+        def __call__(self):
+            return "done"
+
+    return {
+        "function": lambda: "done",
+        "returns_coroutine": lambda: work(),
+        "callable": SyncCallable(),
+        "partial": partial(SyncCallable()),
+    }
+
+
+@pytest.mark.parametrize(
+    "kind", ["function", "returns_coroutine", "callable", "partial"]
+)
+def test_require_async_jobs_rejects_sync_jobs_on_append(kind):
+    async_sched = AsyncScheduler(require_async_jobs=True)
+    job = Job(_sync_job_variants()[kind], Tick("second"))
+
+    with pytest.raises(SyncJobNotAllowed) as excinfo:
+        async_sched.append(job)
+
+    assert isinstance(excinfo.value, TypeError)
+    assert excinfo.value.job is job
+    assert async_sched.jobs == []
+
+
+def test_require_async_jobs_never_calls_the_sync_function():
+    async def scenario():
+        calls = 0
+
+        def blocking():
+            nonlocal calls
+            calls += 1
+
+        async_sched = AsyncScheduler(require_async_jobs=True)
+        # bypass append(), as a caller mutating ``jobs`` directly would
+        async_sched.jobs.append(Job(blocking, Tick("second")))
+
+        with pytest.raises(SyncJobNotAllowed):
+            await async_sched.run_pending(now=datetime(2026, 2, 12, 12, 0, 0))
+
+        assert calls == 0
 
     asyncio.run(scenario())
