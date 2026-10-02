@@ -58,6 +58,43 @@ they never block the loop.
 Pass ``wait=False`` to get back :class:`asyncio.Task` objects immediately instead of
 awaiting every due job before returning.
 
+Which job functions are awaited
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The scheduler decides how to call a job function as follows:
+
+- ``async def`` functions, and callable objects whose ``__call__`` is ``async def``
+  (also when wrapped in :func:`functools.partial`), are awaited directly on the
+  event loop.
+- Any other callable runs in the default executor. If it returns an awaitable (a
+  coroutine, :class:`asyncio.Future`, ...), that awaitable is awaited on the event
+  loop, so ``lambda: fetch(url)`` or a synchronous decorator that returns the
+  wrapped coroutine behave as expected.
+
+.. code-block:: python
+
+   class Poller:
+       def __init__(self, url: str) -> None:
+           self.url = url
+
+       async def __call__(self) -> str:
+           return await fetch(self.url)
+
+   async_sched.append(Job(Poller("https://example.com"), Every(unit="minute", interval=1)))
+   async_sched.append(Job(lambda: fetch("https://example.com"), Every(unit="minute", interval=1)))
+
+.. warning::
+
+   For the second kind, the synchronous part of the function runs in a worker
+   thread. Return the coroutine and let the scheduler await it, or make the
+   function ``async def``. Prefer ``async def`` or an ``async def __call__``
+   when you can as they skip the
+   thread hop.
+
+   An awaitable returned by an ``async def`` function is the job's return value and
+   is *not* awaited a second time. Likewise, a synchronous function cannot return a
+   task or future "as a value": it is awaited, and the job's result is the awaited value.
+
 Limiting concurrency
 ~~~~~~~~~~~~~~~~~~~~~
 
