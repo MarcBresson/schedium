@@ -9,6 +9,7 @@ from functools import partial
 import pytest
 
 from schedium import CancelJob, Job, Tick
+from schedium import asyncio as asyncio_utils
 from schedium.asyncio import AsyncScheduler
 from schedium.scheduler import JobDidNotRunType
 
@@ -40,7 +41,7 @@ def test_async_scheduler_awaits_callable_results(kind, wait):
             def func():
                 return work()
 
-        async_sched = AsyncScheduler()
+        async_sched = AsyncScheduler(await_awaitable_results=kind == "wrapper")
         async_sched.append(Job(func, Tick("second")))
         now = datetime(2026, 2, 12, 12, 0, 0)
         results = await async_sched.run_pending(now=now, wait=wait)
@@ -62,7 +63,7 @@ def test_async_scheduler_removes_wrapped_async_cancelled_job(wait):
         async def cancel_me():
             return CancelJob("done")
 
-        async_sched = AsyncScheduler()
+        async_sched = AsyncScheduler(await_awaitable_results=True)
         async_sched.append(Job(lambda: cancel_me(), Tick("second")))
         results = await async_sched.run_pending(
             now=datetime(2026, 2, 12, 12, 0, 0), wait=wait
@@ -91,7 +92,9 @@ def test_async_scheduler_retries_wrapped_async_failure(wait):
                 raise ValueError("job failed")
             return "recovered"
 
-        async_sched = AsyncScheduler(revert_last_event_on_failure=True)
+        async_sched = AsyncScheduler(
+            revert_last_event_on_failure=True, await_awaitable_results=True
+        )
         job = Job(lambda: work(), Tick("second"))
         async_sched.append(job)
         now = datetime(2026, 2, 12, 12, 0, 0)
@@ -107,6 +110,84 @@ def test_async_scheduler_retries_wrapped_async_failure(wait):
         results = await async_sched.run_pending(now=now, wait=wait)
         assert (results[0] if wait else await results[0]) == "recovered"
         assert calls == 2
+
+    asyncio.run(scenario())
+
+
+def test_async_callable_detection():
+    async def async_func():
+        return "done"
+
+    class AsyncCallable:
+        async def __call__(self):
+            return "done"
+
+    def sync_func():
+        return async_func()
+
+    class SyncCallable:
+        def __call__(self):
+            return "done"
+
+    for func in (
+        async_func,
+        partial(async_func),
+        AsyncCallable(),
+        partial(AsyncCallable()),
+    ):
+        assert asyncio_utils._is_async_callable(func)
+    for func in (
+        sync_func,
+        partial(sync_func),
+        SyncCallable(),
+        partial(SyncCallable()),
+    ):
+        assert not asyncio_utils._is_async_callable(func)
+    assert not asyncio_utils._is_async_callable(object())
+
+
+@pytest.mark.parametrize("kind", ["coroutine", "future", "custom"])
+@pytest.mark.parametrize("wait", [True, False])
+@pytest.mark.parametrize("opt_in", [True, False])
+def test_async_scheduler_sync_awaitable_results_require_opt_in(kind, wait, opt_in):
+    async def scenario():
+        calls = 0
+
+        async def work():
+            nonlocal calls
+            calls += 1
+            return "done"
+
+        class CustomAwaitable:
+            def __await__(self):
+                return work().__await__()
+
+        if kind == "coroutine":
+            returned = work()
+        elif kind == "future":
+            returned = asyncio.get_running_loop().create_future()
+            returned.set_result("done")
+        else:
+            returned = CustomAwaitable()
+
+        async_sched = (
+            AsyncScheduler(await_awaitable_results=True) if opt_in else AsyncScheduler()
+        )
+        async_sched.append(Job(lambda: returned, Tick("second")))
+        try:
+            results = await async_sched.run_pending(
+                now=datetime(2026, 2, 12, 12, 0, 0), wait=wait
+            )
+            result = results[0] if wait else await results[0]
+            if opt_in:
+                assert result == "done"
+                assert calls == (0 if kind == "future" else 1)
+            else:
+                assert result is returned
+                assert calls == 0
+        finally:
+            if inspect.iscoroutine(returned):
+                returned.close()
 
     asyncio.run(scenario())
 

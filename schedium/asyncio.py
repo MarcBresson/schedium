@@ -5,7 +5,8 @@ Async-capable scheduler helpers.
 you would use :class:`~schedium.scheduler.Scheduler` -- and runs due jobs on the
 current event loop. ``async def`` job functions are awaited directly; plain
 synchronous job functions are offloaded to the default executor so they never
-block the loop. Awaitable results from these callables are awaited on the event loop.
+block the loop. Awaiting results from synchronous jobs requires
+``await_awaitable_results=True``.
 
 To run the scheduler loop itself in the background, use a plain
 :func:`asyncio.create_task` -- see :doc:`/usage/asyncio` for the pattern.
@@ -16,9 +17,10 @@ from __future__ import annotations
 import asyncio
 import inspect
 import logging
+from collections.abc import Awaitable, Callable
 from datetime import datetime
 from functools import partial
-from typing import Literal, overload
+from typing import Literal, TypeGuard, overload
 
 from schedium.job import Job
 from schedium.scheduler import JobDidNotRun, JobDidNotRunType
@@ -30,13 +32,22 @@ from schedium.utils.time_of_next_run import time_of_next_run as _time_of_next_ru
 logger = logging.getLogger(__name__)
 
 
-async def _run_job_func(job: Job) -> object:
-    if inspect.iscoroutinefunction(job.func):
+def _is_async_callable(func: object) -> TypeGuard[Callable[[], Awaitable[object]]]:
+    while isinstance(func, partial):
+        func = func.func
+
+    return inspect.iscoroutinefunction(func) or inspect.iscoroutinefunction(
+        getattr(func, "__call__", None)
+    )
+
+
+async def _run_job_func(job: Job, *, await_awaitable_results: bool) -> object:
+    if _is_async_callable(job.func):
         return await job.func()
 
     loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(None, job.func)
-    if inspect.isawaitable(result):
+    if await_awaitable_results and inspect.isawaitable(result):
         return await result
     return result
 
@@ -94,10 +105,11 @@ class AsyncScheduler:
     - When a job is due, this scheduler *claims* the trigger token immediately (by
       updating ``job.last_event``) before dispatching the job. This prevents duplicate
       submissions when the scheduler loop runs again while a job is still executing.
-    - ``async def`` job functions are awaited directly on the event loop. Plain
+    - ``async def`` job functions and callable objects with an async ``__call__``
+      run directly on the event loop, including when wrapped in ``partial``. Plain
       synchronous job functions run in the default executor (a thread pool) via
       :meth:`asyncio.loop.run_in_executor`, so they never block the event loop.
-      Any awaitable they return is then awaited on the event loop.
+      Awaiting any awaitable they return requires ``await_awaitable_results=True``.
 
     Parameters
     ----------
@@ -108,6 +120,10 @@ class AsyncScheduler:
         If True, and a job raises an exception, ``job.last_event`` is reverted to its
         previous value so the job may be retried within the same token on a subsequent
         call.
+    await_awaitable_results : bool, default False
+        If True, await results returned by synchronous jobs on the event loop.
+        If False, return those results unchanged. Async job functions and callable
+        objects with an async ``__call__`` are always awaited directly.
 
     Notes
     -----
@@ -144,11 +160,13 @@ class AsyncScheduler:
         *,
         max_concurrency: int | None = None,
         revert_last_event_on_failure: bool = False,
+        await_awaitable_results: bool = False,
     ) -> None:
         self.jobs: list[Job] = []
 
         self.max_concurrency = max_concurrency
         self.revert_last_event_on_failure = revert_last_event_on_failure
+        self.await_awaitable_results = await_awaitable_results
 
         self._semaphore = (
             asyncio.Semaphore(max_concurrency) if max_concurrency is not None else None
@@ -216,10 +234,14 @@ class AsyncScheduler:
 
     async def _execute(self, job: Job) -> object:
         if self._semaphore is None:
-            return await _run_job_func(job)
+            return await _run_job_func(
+                job, await_awaitable_results=self.await_awaitable_results
+            )
 
         async with self._semaphore:
-            return await _run_job_func(job)
+            return await _run_job_func(
+                job, await_awaitable_results=self.await_awaitable_results
+            )
 
     @overload
     async def run_pending(
