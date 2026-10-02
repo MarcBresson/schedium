@@ -66,10 +66,15 @@ The scheduler decides how to call a job function as follows:
 - ``async def`` functions, and callable objects whose ``__call__`` is ``async def``
   (also when wrapped in :func:`functools.partial`), are awaited directly on the
   event loop.
-- Any other callable runs in the default executor. If it returns an awaitable (a
-  coroutine, :class:`asyncio.Future`, ...), that awaitable is awaited on the event
-  loop, so ``lambda: fetch(url)`` or a synchronous decorator that returns the
-  wrapped coroutine behave as expected.
+- Any other callable runs in the default executor. Its return value is passed
+  through unchanged, *unless* the scheduler was created with
+  ``await_awaitable_results=True``: then, if it returns an awaitable (a coroutine,
+  :class:`asyncio.Future`, ...), that awaitable is awaited on the event loop, so
+  ``lambda: fetch(url)`` or a synchronous decorator that returns the wrapped
+  coroutine behave as expected. Without the option, the job's result is the
+  un-awaited coroutine object and the coroutine never runs.
+- With ``require_async_jobs=True``, the executor fallback is disabled and any job
+  that is not an async callable is rejected (see `Refusing synchronous jobs`_).
 
 .. code-block:: python
 
@@ -81,19 +86,21 @@ The scheduler decides how to call a job function as follows:
            return await fetch(self.url)
 
    async_sched.append(Job(Poller("https://example.com"), Every(unit="minute", interval=1)))
+
+   # Needs AsyncScheduler(await_awaitable_results=True) to actually be awaited
    async_sched.append(Job(lambda: fetch("https://example.com"), Every(unit="minute", interval=1)))
 
 .. warning::
 
    For the second kind, the synchronous part of the function runs in a worker
-   thread. Return the coroutine and let the scheduler await it, or make the
-   function ``async def``. Prefer ``async def`` or an ``async def __call__``
-   when you can as they skip the
-   thread hop.
+   thread, and the returned coroutine is only awaited if
+   ``await_awaitable_results=True``. Prefer ``async def`` or an ``async def __call__``
+   when you can: they skip the thread hop and need no option.
 
    An awaitable returned by an ``async def`` function is the job's return value and
-   is *not* awaited a second time. Likewise, a synchronous function cannot return a
-   task or future "as a value": it is awaited, and the job's result is the awaited value.
+   is *not* awaited a second time. With ``await_awaitable_results=True``, a
+   synchronous function cannot return a task or future "as a value": it is awaited,
+   and the job's result is the awaited value.
 
 Refusing synchronous jobs
 ~~~~~~~~~~~~~~~~~~~~~~~~~
