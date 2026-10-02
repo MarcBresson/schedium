@@ -33,6 +33,13 @@ logger = logging.getLogger(__name__)
 
 
 def _is_async_callable(func: object) -> TypeGuard[Callable[[], Awaitable[object]]]:
+    """
+    Whether calling ``func`` is known to return a coroutine.
+
+    Besides ``async def`` functions, this recognises callable objects whose
+    ``__call__`` is ``async def``, including when wrapped in
+    :func:`functools.partial`.
+    """
     while isinstance(func, partial):
         func = func.func
 
