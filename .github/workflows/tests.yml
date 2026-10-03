@@ -12,6 +12,10 @@ concurrency:
   group: tests-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Python version whose test results feed the PR coverage/duration comment.
+  REPORT_PYTHON: "3.14"
+
 jobs:
   pytest:
     runs-on: ubuntu-latest
@@ -37,41 +41,63 @@ jobs:
           python -m pip install pytest pytest-cov pytest-mock
 
       - name: Run tests
-        run: |
-          pytest -q
+        if: matrix.python-version != env.REPORT_PYTHON
+        run: pytest -q
+
+      # This version also feeds the PR coverage/duration comment (see the coverage job).
+      - name: Run tests with coverage
+        if: matrix.python-version == env.REPORT_PYTHON
+        run: pytest -q --cov=schedium --cov-report=json:coverage.json --junitxml=junit.xml
+
+      - name: Upload results
+        if: ${{ !cancelled() && matrix.python-version == env.REPORT_PYTHON }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: head-results
+          path: |
+            coverage.json
+            junit.xml
 
   coverage:
     name: coverage report
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: pytest
+    if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
 
     steps:
+      # Only needed for the report script.
       - uses: actions/checkout@v4
         with:
           path: head
+          sparse-checkout: .github/scripts
 
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           path: base
 
+      # Missing if the pytest job did not get as far as producing results.
+      - name: Download results of the PR
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: head-results
+          path: head-results
+
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.14"
+          python-version: ${{ env.REPORT_PYTHON }}
           cache: pip
+          cache-dependency-path: base/pyproject.toml
 
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e head
+          python -m pip install -e base
           python -m pip install pytest pytest-cov pytest-mock
-
-      - name: Coverage after the PR
-        working-directory: head
-        run: pytest -q --cov=schedium --cov-report=json:../head-coverage.json --junitxml=../head-junit.xml
 
       # The base branch may be broken or lack tests: report "n/a" instead of failing.
       - name: Coverage before the PR
@@ -80,7 +106,7 @@ jobs:
         run: pytest -q --cov=schedium --cov-report=json:../base-coverage.json --junitxml=../base-junit.xml
 
       - name: Build report
-        run: python head/.github/scripts/coverage_comment.py base-coverage.json head-coverage.json base-junit.xml head-junit.xml > report.md
+        run: python head/.github/scripts/coverage_comment.py base-coverage.json head-results/coverage.json base-junit.xml head-results/junit.xml > report.md
 
       - name: Post or update the PR comment
         uses: actions/github-script@v7
