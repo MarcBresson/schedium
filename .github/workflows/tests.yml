@@ -54,21 +54,23 @@ jobs:
 
       - name: Run tests
         if: matrix.python-version != env.REPORT_PYTHON
-        run: pytest -q
+        run: pytest -q --junitxml=junit.xml
 
-      # This version also feeds the PR coverage/duration comment (see the coverage job).
+      # This version also feeds the coverage part of the PR comment.
       - name: Run tests with coverage
         if: matrix.python-version == env.REPORT_PYTHON
         run: pytest -q --cov=schedium --cov-report=json:coverage.json --junitxml=junit.xml
 
+      # Kept on every push to main: PRs compare themselves against the latest ones.
       - name: Upload results
-        if: ${{ !cancelled() && matrix.python-version == env.REPORT_PYTHON }}
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: head-results
+          name: results-${{ matrix.python-version }}
           path: |
             coverage.json
             junit.xml
+          retention-days: 90
 
   coverage:
     name: coverage report
@@ -78,6 +80,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      actions: read
 
     steps:
       # Only needed for the report script.
@@ -86,39 +89,76 @@ jobs:
           path: head
           sparse-checkout: .github/scripts
 
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          path: base
-
       # Missing if the pytest job did not get as far as producing results.
       - name: Download results of the PR
         continue-on-error: true
         uses: actions/download-artifact@v4
         with:
-          name: head-results
+          pattern: results-*
           path: head-results
+
+      # Latest successful run on main whose artifacts have not expired.
+      - name: Find the baseline run on main
+        id: baseline
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { data: runs } = await github.rest.actions.listWorkflowRuns({
+              owner, repo, workflow_id: "tests.yml", branch: "main", event: "push",
+              status: "success", per_page: 1,
+            });
+            const run = runs.workflow_runs[0];
+            if (!run) return;
+            const { data: artifacts } = await github.rest.actions.listWorkflowRunArtifacts({
+              owner, repo, run_id: run.id, per_page: 100,
+            });
+            if (!artifacts.artifacts.some((a) => !a.expired && a.name.startsWith("results-"))) return;
+            core.setOutput("run-id", run.id);
+            core.setOutput("note", `Compared against the latest run on main (${run.head_sha.slice(0, 7)}).`);
+
+      - name: Download results of main
+        if: steps.baseline.outputs.run-id
+        uses: actions/download-artifact@v4
+        with:
+          pattern: results-*
+          path: base-results
+          run-id: ${{ steps.baseline.outputs.run-id }}
+          github-token: ${{ github.token }}
+
+      # No usable results on main (e.g. older than the retention): measure the base commit,
+      # on the report Python version only.
+      - name: Check out the base commit
+        if: ${{ !steps.baseline.outputs.run-id }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
 
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.REPORT_PYTHON }}
-          cache: pip
-          cache-dependency-path: base/pyproject.toml
 
-      - name: Install
+      - name: Install the base commit
+        if: ${{ !steps.baseline.outputs.run-id }}
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e base
           python -m pip install pytest pytest-cov pytest-mock
 
       # The base branch may be broken or lack tests: report "n/a" instead of failing.
-      - name: Coverage before the PR
+      - name: Run the tests of the base commit
+        if: ${{ !steps.baseline.outputs.run-id }}
         working-directory: base
         continue-on-error: true
-        run: pytest -q --cov=schedium --cov-report=json:../base-coverage.json --junitxml=../base-junit.xml
+        run: |
+          mkdir -p ../base-results/results-${{ env.REPORT_PYTHON }}
+          pytest -q --cov=schedium --cov-report=json:../base-results/results-${{ env.REPORT_PYTHON }}/coverage.json --junitxml=../base-results/results-${{ env.REPORT_PYTHON }}/junit.xml
 
       - name: Build report
-        run: python head/.github/scripts/coverage_comment.py base-coverage.json head-results/coverage.json base-junit.xml head-results/junit.xml > report.md
+        env:
+          BASELINE_NOTE: ${{ steps.baseline.outputs.note || format('No recent run on main, compared against the base commit ({0}), Python {1} only.', github.event.pull_request.base.sha, env.REPORT_PYTHON) }}
+        run: python head/.github/scripts/coverage_comment.py base-results head-results > report.md
 
       - name: Post or update the PR comment
         uses: actions/github-script@v7
