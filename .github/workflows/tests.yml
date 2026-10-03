@@ -3,7 +3,19 @@ name: Tests
 on:
   push:
     branches: ["main"]
+    paths:
+      - "schedium/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - ".github/workflows/tests.yml"
+      - ".github/scripts/**"
   pull_request:
+    paths:
+      - "schedium/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - ".github/workflows/tests.yml"
+      - ".github/scripts/**"
 
 permissions:
   contents: read
