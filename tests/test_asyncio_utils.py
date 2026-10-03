@@ -115,36 +115,37 @@ def test_async_scheduler_retries_wrapped_async_failure(wait):
     asyncio.run(scenario())
 
 
-def test_async_callable_detection():
-    async def async_func():
-        return "done"
+def test_extract_awaitable():
+    async def scenario():
+        calls = 0
 
-    class AsyncCallable:
-        async def __call__(self):
+        async def async_func():
+            nonlocal calls
+            calls += 1
             return "done"
 
-    def sync_func():
-        return async_func()
+        class AsyncCallable:
+            async def __call__(self):
+                return await async_func()
 
-    class SyncCallable:
-        def __call__(self):
-            return "done"
+        def sync_func():
+            nonlocal calls
+            calls += 1
+            return async_func()
 
-    for func in (
-        async_func,
-        partial(async_func),
-        AsyncCallable(),
-        partial(AsyncCallable()),
-    ):
-        assert asyncio_utils._is_async_callable(func)
-    for func in (
-        sync_func,
-        partial(sync_func),
-        SyncCallable(),
-        partial(SyncCallable()),
-    ):
-        assert not asyncio_utils._is_async_callable(func)
-    assert not asyncio_utils._is_async_callable(object())
+        for func in (async_func, AsyncCallable(), partial(AsyncCallable())):
+            awaitable = asyncio_utils._extract_awaitable(func)
+            assert inspect.isawaitable(awaitable)
+            assert await awaitable == "done"
+        assert calls == 3
+
+        # not async: left uncalled
+        assert asyncio_utils._extract_awaitable(sync_func) is None
+        assert asyncio_utils._extract_awaitable(partial(sync_func)) is None
+        assert asyncio_utils._extract_awaitable(object()) is None
+        assert calls == 3
+
+    asyncio.run(scenario())
 
 
 @pytest.mark.parametrize("kind", ["coroutine", "future", "custom"])

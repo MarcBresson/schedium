@@ -21,7 +21,7 @@ import logging
 from collections.abc import Awaitable, Callable
 from datetime import datetime
 from functools import partial
-from typing import Literal, TypeGuard, overload
+from typing import Literal, cast, overload
 
 from schedium.exceptions import SyncJobNotAllowed
 from schedium.job import Job
@@ -34,25 +34,39 @@ from schedium.utils.time_of_next_run import time_of_next_run as _time_of_next_ru
 logger = logging.getLogger(__name__)
 
 
-def _is_async_callable(func: object) -> TypeGuard[Callable[[], Awaitable[object]]]:
+def _extract_awaitable(func: object) -> Awaitable[object] | None:
     """
-    Whether calling ``func`` is known to return a coroutine.
+    Call ``func`` and return the awaitable it produces, if it is known to be async.
 
-    Besides ``async def`` functions, this recognises callable objects whose
-    ``__call__`` is ``async def``, including when wrapped in
-    :func:`functools.partial`.
+    A callable is known to be async when it is an ``async def`` function or a
+    callable object whose ``__call__`` is ``async def``, including when wrapped in
+    :func:`functools.partial`. Calling such a callable only creates a coroutine, it
+    does not run any of its body, so this is safe to do on the event loop thread.
+    Nothing is called for any other callable, which is how a synchronous function
+    is told apart from an async one without running it.
 
     Parameters
     ----------
     func : object
-        The callable to check.
-    """
-    while isinstance(func, partial):
-        func = func.func
+        The job callable.
 
-    return inspect.iscoroutinefunction(func) or inspect.iscoroutinefunction(
-        getattr(func, "__call__", None)
-    )
+    Returns
+    -------
+    Awaitable[object] | None
+        The un-awaited coroutine returned by ``func()``, or None if ``func`` is not
+        a known async callable (and was therefore left uncalled).
+    """
+    unwrapped = func
+    while isinstance(unwrapped, partial):
+        unwrapped = unwrapped.func
+
+    if not (
+        inspect.iscoroutinefunction(unwrapped)
+        or inspect.iscoroutinefunction(getattr(unwrapped, "__call__", None))
+    ):
+        return None
+
+    return cast(Callable[[], Awaitable[object]], func)()
 
 
 async def _run_job_func(
@@ -61,8 +75,9 @@ async def _run_job_func(
     await_awaitable_results: bool,
     require_async_jobs: bool = False,
 ) -> object:
-    if _is_async_callable(job.func):
-        return await job.func()
+    awaitable = _extract_awaitable(job.func)
+    if awaitable is not None:
+        return await awaitable
 
     if require_async_jobs:
         raise SyncJobNotAllowed(job)
@@ -237,8 +252,13 @@ class AsyncScheduler:
             async callable.
         """
 
-        if self.require_async_jobs and not _is_async_callable(job.func):
-            raise SyncJobNotAllowed(job)
+        if self.require_async_jobs:
+            awaitable = _extract_awaitable(job.func)
+            if awaitable is None:
+                raise SyncJobNotAllowed(job)
+            # only probing: the coroutine is never going to be awaited
+            if inspect.iscoroutine(awaitable):
+                awaitable.close()
 
         self.jobs.append(job)
 
