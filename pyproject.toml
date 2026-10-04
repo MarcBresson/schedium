@@ -52,6 +52,7 @@ docs = [
 ]
 test = [
   "pytest",
+  "pytest-asyncio",
   "pytest-cov",
   "pytest-mock",
 ]
@@ -61,6 +62,7 @@ version = {attr = "schedium.__version__"}
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+asyncio_mode = "auto"
 
 [tool.numpydoc_validation]
 checks = [
