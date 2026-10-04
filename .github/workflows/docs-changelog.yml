@@ -1,0 +1,37 @@
+name: Docs changelog refresh
+
+# The changelog page is generated from GitHub releases at build time, so
+# editing a release's notes leaves the published docs stale until the next
+# build. Trigger one on Read the Docs whenever a release is published or edited.
+on:
+  release:
+    types: [published, edited, deleted]
+
+permissions: {}
+
+concurrency:
+  group: docs-changelog
+  cancel-in-progress: true
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Read the Docs build
+        env:
+          READTHEDOCS_TOKEN: ${{ secrets.READTHEDOCS_TOKEN }}
+          READTHEDOCS_PROJECT_SLUG: ${{ secrets.READTHEDOCS_PROJECT_SLUG }}
+          READTHEDOCS_VERSION: ${{ secrets.READTHEDOCS_VERSION }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${READTHEDOCS_TOKEN:-}" || -z "${READTHEDOCS_PROJECT_SLUG:-}" ]]; then
+            echo "Skipping RTD trigger: READTHEDOCS_TOKEN/READTHEDOCS_PROJECT_SLUG not set"
+            exit 0
+          fi
+          version="${READTHEDOCS_VERSION:-latest}"
+          echo "Triggering RTD build: project=${READTHEDOCS_PROJECT_SLUG} version=${version}"
+          curl -fsS -X POST \
+            -H "Authorization: Token ${READTHEDOCS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "https://readthedocs.org/api/v3/projects/${READTHEDOCS_PROJECT_SLUG}/versions/${version}/builds/" \
+            -d '{}'

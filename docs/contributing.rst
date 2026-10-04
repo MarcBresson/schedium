@@ -70,6 +70,10 @@ run when a ``v*`` tag is pushed.
    ``READTHEDOCS_TOKEN`` and ``READTHEDOCS_PROJECT_SLUG`` secrets are set. Read the Docs
    itself rebuilds from ``.readthedocs.yaml``.
 
+**Docs changelog refresh** (``docs-changelog.yml``)
+   When a GitHub release is published, edited or deleted, triggers a Read the Docs build
+   (same secrets as above) so that the :doc:`changelog` reflects the current release notes.
+
 **Release** (``release.yml``)
    On a ``v*`` tag, builds the sdist and wheel and creates a GitHub release with
    auto-generated release notes and the distributions attached. These release notes are what
