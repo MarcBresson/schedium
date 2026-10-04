@@ -463,3 +463,111 @@ def test_require_async_jobs_never_calls_the_sync_function():
         assert calls == 0
 
     asyncio.run(scenario())
+
+
+def test_async_scheduler_start_runs_jobs_in_background():
+    async def scenario():
+        calls = 0
+
+        async def work():
+            nonlocal calls
+            calls += 1
+
+        async_sched = AsyncScheduler()
+        async_sched.append(Job(work, Tick("second")))
+        assert not async_sched.is_running
+
+        async_sched.start(interval=0.01)
+        assert async_sched.is_running
+        await asyncio.sleep(0.05)
+        await async_sched.stop()
+
+        assert not async_sched.is_running
+        assert calls >= 1
+
+    asyncio.run(scenario())
+
+
+def test_async_scheduler_start_requires_running_loop():
+    with pytest.raises(RuntimeError):
+        AsyncScheduler().start()
+
+
+def test_async_scheduler_context_manager_starts_and_stops():
+    async def scenario():
+        async_sched = AsyncScheduler()
+        async with async_sched as entered:
+            assert entered is async_sched
+            assert async_sched.is_running
+        assert not async_sched.is_running
+
+    asyncio.run(scenario())
+
+
+def test_async_scheduler_stop_cancels_jobs_after_timeout(caplog):
+    async def scenario():
+        cancelled = False
+
+        async def work():
+            nonlocal cancelled
+            try:
+                await asyncio.sleep(10)
+            except asyncio.CancelledError:
+                cancelled = True
+                raise
+
+        async_sched = AsyncScheduler()
+        async_sched.append(Job(work, Tick("day")))
+        async_sched.start(interval=0.01)
+        await asyncio.sleep(0.02)
+
+        await asyncio.wait_for(async_sched.stop(timeout=0.01), timeout=1)
+        assert cancelled
+        assert not async_sched._background_tasks
+
+    with caplog.at_level("ERROR", logger="schedium.asyncio"):
+        asyncio.run(scenario())
+
+    # cancelling a job on shutdown is not a job failure
+    assert not caplog.records
+
+
+def test_async_scheduler_loop_survives_failures(caplog):
+    async def scenario():
+        calls = 0
+
+        async def failing():
+            raise RuntimeError("boom")
+
+        async def work():
+            nonlocal calls
+            calls += 1
+
+        async_sched = AsyncScheduler()
+        async_sched.append(Job(failing, Tick("second")))
+        async_sched.append(Job(work, Tick("second")))
+
+        original = async_sched.run_pending
+        failures = 0
+
+        async def flaky(*args, **kwargs):
+            nonlocal failures
+            if failures == 0:
+                failures += 1
+                raise RuntimeError("tick failed")
+            return await original(*args, **kwargs)
+
+        async_sched.run_pending = flaky
+        async_sched.start(interval=0.01)
+        await asyncio.sleep(0.05)
+        assert async_sched.is_running
+        await async_sched.stop()
+
+        assert failures == 1
+        assert calls >= 1
+
+    with caplog.at_level("ERROR", logger="schedium.asyncio"):
+        asyncio.run(scenario())
+
+    assert any("boom" in (r.exc_text or "") for r in caplog.records)
+    assert any("loop failed" in r.getMessage() for r in caplog.records)

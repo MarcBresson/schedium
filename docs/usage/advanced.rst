@@ -7,6 +7,7 @@ Guide map
 ---------
 
 - :doc:`celery` — keep schedium for planning and dispatch due work to Celery workers.
+- :doc:`fastapi` — start an async scheduler in a FastAPI lifespan, without blocking.
 - :doc:`timezone` — recommendations for UTC-aware scheduling and DST caveats.
 - :doc:`exceptions` — failure behavior, retry semantics, and cancellation helpers.
 - :doc:`threading` — run jobs concurrently with thread pools/queues.
@@ -26,6 +27,7 @@ Use these guides if you need one or more of the following:
    :maxdepth: 2
 
    With Celery <celery>
+   With FastAPI <fastapi>
    Timezone <timezone>
    Exceptions <exceptions>
    Threading <threading>
