@@ -90,6 +90,13 @@ Contents
 
 .. toctree::
    :maxdepth: 1
+   :caption: Project
+
+   Changelog <changelog>
+   Contributing <contributing>
+
+.. toctree::
+   :maxdepth: 1
    :caption: Links
 
    GitHub <https://github.com/MarcBresson/schedium>

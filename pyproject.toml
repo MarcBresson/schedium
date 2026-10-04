@@ -33,7 +33,7 @@ classifiers=[
 [project.urls]
 Repository = "https://github.com/MarcBresson/schedium"
 Issues = "https://github.com/MarcBresson/schedium"
-Changelog = "https://github.com/MarcBresson/schedium"
+Changelog = "https://schedium.readthedocs.io/en/latest/changelog.html"
 
 [dependency-groups]
 dev = [
@@ -49,6 +49,7 @@ docs = [
   "sphinx_copybutton>=0.5.2",
   "sphinxext-opengraph[social_cards]>=0.13.0",
   "sphinx-toolbox==4.1.2",
+  "sphinx-github-changelog>=2.3.0",
 ]
 test = [
   "pytest",

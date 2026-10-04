@@ -27,9 +27,12 @@ extensions = [
     "sphinxext.opengraph",
     "sphinx_toolbox.sidebar_links",
     "sphinx_toolbox.github",
+    "sphinx_github_changelog",
 ]
 
 autosummary_generate = True
+
+sphinx_github_changelog_root_repo = "MarcBresson/schedium"
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
