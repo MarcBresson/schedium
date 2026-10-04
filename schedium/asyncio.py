@@ -9,8 +9,9 @@ block the loop. Awaiting results from synchronous jobs requires
 ``await_awaitable_results=True``. Pass ``require_async_jobs=True`` to forbid the
 executor fallback altogether and reject any job that is not an async callable.
 
-To run the scheduler loop itself in the background, use a plain
-:func:`asyncio.create_task` -- see :doc:`/usage/asyncio` for the pattern.
+To run the scheduler loop itself in the background, use
+:meth:`AsyncScheduler.start` and :meth:`AsyncScheduler.stop` (or ``async with``
+the scheduler) -- see :doc:`/usage/asyncio`.
 """
 
 from __future__ import annotations
@@ -113,6 +114,15 @@ def _on_task_done(
     _event: TriggerEvent,
     _prev: TriggerEvent | None,
 ) -> None:
+    if task.cancelled():
+        # e.g. AsyncScheduler.stop() gave up waiting for it: not a job failure.
+        _scheduler.maybe_revert_last_event(
+            _job,
+            claimed_event=_event,
+            previous_event=_prev,
+        )
+        return
+
     try:
         result = task.result()
     except BaseException:  # pylint: disable=broad-except
@@ -199,6 +209,11 @@ class AsyncScheduler:
         If a job returns :class:`~schedium.types.cancel_job.CancelJob`, the job is
         removed from the scheduler.
 
+    Background loop
+        :meth:`start` runs the scheduler loop as a task on the running event loop,
+        and :meth:`stop` cancels it and waits for the jobs that are still running.
+        The scheduler can also be used as an ``async with`` block that does both.
+
     Examples
     --------
     Run due jobs concurrently while keeping control of the event loop
@@ -215,6 +230,19 @@ class AsyncScheduler:
     ...     return await sched.run_pending(now=datetime(2026, 2, 12, 12, 0, 0))
     >>> asyncio.run(main())
     ['ok']
+
+    Run the scheduler in the background for the duration of a block
+
+    >>> async def main():
+    ...     async def tick():
+    ...         return "ok"
+    ...     sched = AsyncScheduler()
+    ...     sched.append(Job(tick, Every(unit="second", interval=1)))
+    ...     async with sched:
+    ...         await asyncio.sleep(0.1)
+    ...         return sched.is_running
+    >>> asyncio.run(main())
+    True
     """
 
     def __init__(
@@ -235,6 +263,10 @@ class AsyncScheduler:
         self._semaphore = (
             asyncio.Semaphore(max_concurrency) if max_concurrency is not None else None
         )
+
+        self._loop_task: asyncio.Task[None] | None = None
+        # jobs dispatched by run_pending(wait=False), so that stop() can wait for them
+        self._background_tasks: set[asyncio.Task[object]] = set()
 
     def append(self, job: Job) -> None:
         """
@@ -387,6 +419,8 @@ class AsyncScheduler:
             tasks_to_job[task] = (job, event, prev_event)
 
             if not wait:
+                self._background_tasks.add(task)
+                task.add_done_callback(self._background_tasks.discard)
                 task.add_done_callback(
                     partial(
                         _on_task_done,
@@ -431,6 +465,90 @@ class AsyncScheduler:
                 self.remove_job_if_present(job)
 
         return results
+
+    @property
+    def is_running(self) -> bool:
+        """Whether the background loop started by :meth:`start` is running."""
+        return self._loop_task is not None and not self._loop_task.done()
+
+    def start(self, interval: float = 1.0) -> None:
+        """
+        Run the scheduler loop in the background, on the running event loop.
+
+        Every ``interval`` seconds, due jobs are dispatched with
+        ``run_pending(wait=False)``, so a long-running job never delays the next
+        tick. Job failures are logged, and so is any error raised by the loop
+        itself: neither stops the loop. Does nothing if the loop is already running.
+
+        Parameters
+        ----------
+        interval : float, default 1.0
+            Seconds to sleep between two calls to ``run_pending``.
+
+        Raises
+        ------
+        ValueError
+            If ``interval`` is not strictly positive.
+        RuntimeError
+            If there is no running event loop. Call this from a coroutine or from
+            a callback of the event loop.
+        """
+        if interval <= 0:
+            raise ValueError(f"interval must be strictly positive, got {interval!r}")
+
+        if self.is_running:
+            return
+
+        # raises before the coroutine is created if there is no running loop
+        loop = asyncio.get_running_loop()
+        self._loop_task = loop.create_task(
+            self._run_loop(interval), name="schedium-scheduler"
+        )
+
+    async def stop(self, timeout: float | None = None) -> None:
+        """
+        Stop the background loop, then wait for the jobs that are still running.
+
+        No new job is dispatched once this is called. Jobs already running are
+        given ``timeout`` seconds to finish, after which they are cancelled. Does
+        nothing if the loop is not running and no job is left. The scheduler can be
+        started again afterwards.
+
+        Parameters
+        ----------
+        timeout : float | None, default None
+            Seconds to wait for running jobs before cancelling them. If None, wait
+            for them for as long as it takes.
+        """
+        loop_task, self._loop_task = self._loop_task, None
+        if loop_task is not None:
+            loop_task.cancel()
+            await asyncio.gather(loop_task, return_exceptions=True)
+
+        running = set(self._background_tasks)
+        if not running:
+            return
+
+        _, unfinished = await asyncio.wait(running, timeout=timeout)
+        for task in unfinished:
+            task.cancel()
+        if unfinished:
+            await asyncio.gather(*unfinished, return_exceptions=True)
+
+    async def __aenter__(self) -> AsyncScheduler:
+        self.start()
+        return self
+
+    async def __aexit__(self, *exc_info: object) -> None:
+        await self.stop()
+
+    async def _run_loop(self, interval: float) -> None:
+        while True:
+            try:
+                await self.run_pending(wait=False)
+            except Exception:  # pylint: disable=broad-except
+                logger.exception("AsyncScheduler loop failed, continuing")
+            await asyncio.sleep(interval)
 
     def time_of_next_run(
         self,

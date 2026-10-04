@@ -160,37 +160,62 @@ Use ``max_concurrency`` to cap how many jobs run at the same time. If max_concur
 
    async_sched = AsyncScheduler(max_concurrency=4)
 
+.. _running-the-loop-in-the-background:
+
 Running the loop in the background
 -----------------------------------
 
-If your current coroutine should stay free for other work, run the loop above as a
-regular :func:`asyncio.create_task` -- there is no dedicated helper for this,
-since asyncio's own task API already covers it in a couple of lines:
+If your current coroutine should stay free for other work, call
+:meth:`~schedium.asyncio.AsyncScheduler.start`. It runs the scheduler loop as a task
+on the running event loop and returns immediately. Every ``interval`` seconds (1 by
+default) due jobs are dispatched without waiting for them, so a slow job never
+delays the next tick.
 
 .. code-block:: python
 
-   import logging
+   async def main():
+       async_sched.start(interval=1.0)
 
-   async def loop():
-       while True:
-           await async_sched.run_pending(wait=False)
-           await asyncio.sleep(1)
+       ...  # the rest of your application
 
-   task = asyncio.create_task(loop())
+       await async_sched.stop(timeout=10)
 
-   # ... later
-   task.cancel()
-   try:
-       await task
-   except asyncio.CancelledError:
-       pass  # expected: this is the cancellation we just requested
-   except Exception:
-       logging.exception("scheduler loop crashed")
+   asyncio.run(main())
 
-``task.cancel()`` interrupts the loop at its next await point (immediately, if it is
-currently sleeping), and any exception raised inside ``loop()`` surfaces when you
-``await task`` -- catch :class:`asyncio.CancelledError` separately if you want to
-tell that expected shutdown apart from a genuine crash.
+:meth:`~schedium.asyncio.AsyncScheduler.stop` cancels the loop, so nothing new is
+dispatched, then waits for the jobs that are still running. Those that have not
+finished after ``timeout`` seconds are cancelled (with the default
+``timeout=None``, it waits for them for as long as it takes). Cancelling a job this
+way is not logged as a failure, but ``revert_last_event_on_failure`` still applies.
+
+The scheduler can also be used as an ``async with`` block, which calls ``start()``
+on entry and ``stop()`` on exit:
+
+.. code-block:: python
+
+   async def main():
+       async with async_sched:
+           ...  # the rest of your application
+
+Details worth knowing:
+
+- ``start()`` must be called from a running event loop (a coroutine, or a callback
+  of the loop), otherwise it raises :class:`RuntimeError`. It does nothing if the
+  loop is already running, and the scheduler can be started again after ``stop()``.
+- Job failures are logged, and so is any error raised by the loop itself. Neither
+  stops the loop. Use :attr:`~schedium.asyncio.AsyncScheduler.is_running` to check
+  that it is alive.
+- ``stop()`` only waits for jobs dispatched by the background loop (or by your own
+  ``run_pending(wait=False)`` calls). Jobs you ran with ``wait=True`` are yours to
+  await.
+
+For a web application, see :doc:`fastapi` for how to tie the loop to the
+application's lifespan.
+
+If you need something different, such as a custom sleep strategy, nothing stops you
+from writing the loop yourself with :func:`asyncio.create_task`: it is only a
+``while True`` around ``await async_sched.run_pending(wait=False)`` and
+``await asyncio.sleep(...)``.
 
 
 Notes and caveats
