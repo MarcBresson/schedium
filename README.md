@@ -110,6 +110,24 @@ async def main():
 asyncio.run(main())
 ```
 
+## Plugins (optional)
+
+Plugins observe jobs and change how they run (retry, timeout, extra actions...) without
+touching the jobs. Subclass `schedium.Plugin`, override the hooks you need, and pass
+instances to a scheduler (or to a single job):
+
+```python
+from schedium import Every, Job, Plugin, Scheduler
+
+class Announce(Plugin):
+    def on_job_start(self, run):
+        print("starting", run.job.identifier)
+
+sched = Scheduler(plugins=[Announce()])
+```
+
+See the [plugins documentation](https://schedium.readthedocs.io/en/latest/plugins/developers.html).
+
 ## Composing triggers
 
 Triggers are the building blocks of schedules. Combine them freely:

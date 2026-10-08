@@ -4,7 +4,7 @@ import logging
 import queue
 import threading
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime
@@ -12,12 +12,24 @@ from functools import partial
 from typing import Literal, overload
 
 from schedium.job import Job
+from schedium.plugins._runner import PluginHost, notify, run_sync
+from schedium.plugins.base import Plugin
 from schedium.scheduler import JobDidNotRun, JobDidNotRunType, Scheduler
 from schedium.triggers.base import TriggerEvent
 from schedium.types.cancel_job import CancelJob
 from schedium.utils.evaluate import evaluate
 
 logger = logging.getLogger(__name__)
+
+
+class _WrappingPluginHost(PluginHost):
+    """Plugin host for schedulers wrapping a :class:`Scheduler`."""
+
+    scheduler: Scheduler
+
+    def _effective_plugins(self) -> list[Plugin]:
+        # plugins of the wrapped scheduler apply too, outermost first
+        return [*self.scheduler.plugins, *self.plugins]
 
 
 def _done_callback(
@@ -40,10 +52,10 @@ def _done_callback(
         return
 
     if isinstance(result, CancelJob):
-        _scheduler._remove_job_if_present(_job)
+        _scheduler._remove_job_if_present(_job, result.reason)
 
 
-class ThreadedJobsScheduler:
+class ThreadedJobsScheduler(_WrappingPluginHost):
     """
     Run due jobs concurrently using a thread pool.
 
@@ -70,6 +82,9 @@ class ThreadedJobsScheduler:
         If True, and a job raises an exception, ``job.last_event`` is reverted to its
         previous value so the job may be retried within the same token on a subsequent
         call.
+    plugins : Iterable[Plugin], default ()
+        Plugins applying to every job run by this scheduler, in addition to the
+        plugins of the wrapped scheduler. See :class:`~schedium.plugins.Plugin`.
 
     Notes
     -----
@@ -106,8 +121,10 @@ class ThreadedJobsScheduler:
         max_workers: int | None = None,
         thread_name_prefix: str = "schedium-job",
         revert_last_event_on_failure: bool = False,
+        plugins: Iterable[Plugin] = (),
     ) -> None:
         self.scheduler = scheduler or Scheduler()
+        self._init_plugins(list(plugins))
 
         self.max_workers = max_workers
         self.thread_name_prefix = thread_name_prefix
@@ -121,7 +138,8 @@ class ThreadedJobsScheduler:
 
     def append(self, job: Job) -> None:
         with self._lock:
-            self.scheduler.append(job)
+            self.scheduler.jobs.append(job)
+        notify(self._effective_plugins(), "on_job_added", self, job)
 
     @property
     def jobs(self) -> list[Job]:
@@ -144,13 +162,15 @@ class ThreadedJobsScheduler:
         """
 
         self._executor.shutdown(wait=wait, cancel_futures=cancel_futures)
+        notify(self._effective_plugins(), "on_scheduler_stop", self)
 
-    def _remove_job_if_present(self, job: Job) -> None:
+    def _remove_job_if_present(self, job: Job, reason: str | None = None) -> None:
         with self._lock:
             try:
                 self.scheduler.jobs.remove(job)
             except ValueError:
                 return
+        notify(self._effective_plugins(), "on_job_removed", self, job, reason)
 
     def _maybe_revert_last_event(
         self,
@@ -245,7 +265,13 @@ class ThreadedJobsScheduler:
                 pending.append(JobDidNotRun)
                 continue
 
-            future: Future[object] = self._executor.submit(job.func)
+            future: Future[object] = self._executor.submit(
+                run_sync,
+                job,
+                scheduler=self,
+                plugins=self._effective_plugins(),
+                event=event,
+            )
             futures_to_job[future] = (job, event, prev_event)
 
             if not wait:
@@ -288,7 +314,7 @@ class ThreadedJobsScheduler:
 
             results.append(result)
             if isinstance(result, CancelJob):
-                self._remove_job_if_present(job)
+                self._remove_job_if_present(job, result.reason)
 
         return results
 
@@ -304,7 +330,7 @@ class _QueueWorkItem:
     previous_event: TriggerEvent | None
 
 
-class QueuedJobsScheduler:
+class QueuedJobsScheduler(_WrappingPluginHost):
     """
     Run the scheduler in the main thread, dispatch due jobs via a queue to workers.
 
@@ -331,6 +357,9 @@ class QueuedJobsScheduler:
     revert_last_event_on_failure : bool, default False
         If True and a job raises, reverts ``job.last_event`` to the previous value
         so it may be retried for the same token.
+    plugins : Iterable[Plugin], default ()
+        Plugins applying to every job run by this scheduler, in addition to the
+        plugins of the wrapped scheduler. See :class:`~schedium.plugins.Plugin`.
 
     Examples
     --------
@@ -358,11 +387,13 @@ class QueuedJobsScheduler:
         queue_: queue.Queue | None = None,
         thread_name_prefix: str = "schedium-worker",
         revert_last_event_on_failure: bool = False,
+        plugins: Iterable[Plugin] = (),
     ) -> None:
         if worker_count < 1:
             raise ValueError("worker_count must be >= 1")
 
         self.scheduler = scheduler or Scheduler()
+        self._init_plugins(list(plugins))
         self.worker_count = worker_count
         self.thread_name_prefix = thread_name_prefix
         self.revert_last_event_on_failure = revert_last_event_on_failure
@@ -374,7 +405,8 @@ class QueuedJobsScheduler:
 
     def append(self, job: Job) -> None:
         with self._lock:
-            self.scheduler.append(job)
+            self.scheduler.jobs.append(job)
+        notify(self._effective_plugins(), "on_job_added", self, job)
 
     @property
     def jobs(self) -> list[Job]:
@@ -401,7 +433,12 @@ class QueuedJobsScheduler:
                     continue
 
                 try:
-                    result = work.job.func()
+                    result = run_sync(
+                        work.job,
+                        scheduler=self,
+                        plugins=self._effective_plugins(),
+                        event=work.claimed_event,
+                    )
                 except BaseException as exc:
                     logger.exception("Queued job %r raised", work.job)
                     self._maybe_revert_last_event(
@@ -415,7 +452,7 @@ class QueuedJobsScheduler:
                 work.future.set_result(result)
 
                 if isinstance(result, CancelJob):
-                    self._remove_job_if_present(work.job)
+                    self._remove_job_if_present(work.job, result.reason)
             finally:
                 self._queue.task_done()
 
@@ -433,6 +470,8 @@ class QueuedJobsScheduler:
             self._workers.append(thread)
             thread.start()
 
+        notify(self._effective_plugins(), "on_scheduler_start", self)
+
     def stop_workers(self, *, join: bool = True, timeout: float | None = None) -> None:
         if not self._started:
             return
@@ -446,13 +485,15 @@ class QueuedJobsScheduler:
 
         self._workers.clear()
         self._started = False
+        notify(self._effective_plugins(), "on_scheduler_stop", self)
 
-    def _remove_job_if_present(self, job: Job) -> None:
+    def _remove_job_if_present(self, job: Job, reason: str | None = None) -> None:
         with self._lock:
             try:
                 self.scheduler.jobs.remove(job)
             except ValueError:
                 return
+        notify(self._effective_plugins(), "on_job_removed", self, job, reason)
 
     def _maybe_revert_last_event(
         self,
@@ -601,7 +642,18 @@ class SchedulerThread:
         self._thread: threading.Thread | None = None
         self.exception: BaseException | None = None
 
+    def _fires_lifecycle_hooks(self) -> bool:
+        # ThreadedJobsScheduler owns its lifecycle (shutdown); a plain Scheduler
+        # has none, so this thread is its start/stop.
+        return isinstance(self.scheduler, Scheduler)
+
     def _run_loop(self) -> None:
+        if self._fires_lifecycle_hooks():
+            notify(
+                self.scheduler._effective_plugins(),
+                "on_scheduler_start",
+                self.scheduler,
+            )
         try:
             while not self._stop_event.is_set():
                 now = self.now_func() if self.now_func is not None else None
@@ -614,6 +666,13 @@ class SchedulerThread:
         except BaseException as exc:
             self.exception = exc
             raise
+        finally:
+            if self._fires_lifecycle_hooks():
+                notify(
+                    self.scheduler._effective_plugins(),
+                    "on_scheduler_stop",
+                    self.scheduler,
+                )
 
     def start(self) -> None:
         if self._thread is not None and self._thread.is_alive():

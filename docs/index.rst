@@ -71,6 +71,12 @@ Contents
 
 .. toctree::
    :maxdepth: 2
+   :caption: Plugins
+
+   Developing plugins <plugins/developers>
+
+.. toctree::
+   :maxdepth: 2
    :caption: Concepts
 
    Concepts <concepts/index>
@@ -86,6 +92,7 @@ Contents
    Utils <api/utils>
    Threading <api/threading>
    Asyncio <api/asyncio>
+   Plugins <api/plugins>
    Triggers <api/triggers/index>
 
 .. toctree::

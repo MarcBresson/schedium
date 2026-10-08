@@ -16,9 +16,11 @@ Most users will construct jobs directly and register them via
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from datetime import datetime
 
+from schedium.plugins._runner import run_sync
+from schedium.plugins.base import Plugin
 from schedium.triggers import BaseTrigger
 from schedium.triggers.base import TriggerEvent
 from schedium.utils.evaluate import evaluate
@@ -38,6 +40,13 @@ class Job:
         The trigger that decides when this job is due.
     name : str, default None
         Optional human-readable label used in `repr(job)`.
+    id : str, default None
+        Optional stable identifier. Plugins that keep history (for example run
+        traces) use it to tell jobs apart across restarts. See
+        :attr:`identifier`.
+    plugins : Iterable[Plugin], default ()
+        Plugins that apply to this job only, in addition to the plugins of the
+        scheduler running it. See :class:`~schedium.plugins.Plugin`.
 
     Notes
     -----
@@ -65,12 +74,39 @@ class Job:
         func: Callable[[], object],
         trigger: BaseTrigger,
         name: str | None = None,
+        *,
+        id: str | None = None,
+        plugins: Iterable[Plugin] = (),
     ):
         self.func = func
         self.trigger = trigger
         self.name = name
+        self.id = id
+        self.plugins: list[Plugin] = list(plugins)
 
         self.last_event: TriggerEvent | None = None
+
+    @property
+    def identifier(self) -> str:
+        """
+        Stable label that identifies this job in traces and logs.
+
+        It is :attr:`id` if given, otherwise :attr:`name`, otherwise the
+        ``module.qualname`` of the callable (``repr`` for callables without
+        one). History stays attached to the same job across restarts as long as
+        that value does not change.
+        """
+        if self.id is not None:
+            return self.id
+        if self.name is not None:
+            return self.name
+        func = self.func
+        while hasattr(func, "func"):  # functools.partial
+            func = func.func
+        qualname = getattr(func, "__qualname__", None)
+        if qualname is None:
+            return repr(self.func)
+        return f"{getattr(func, '__module__', '?')}.{qualname}"
 
     def is_due(self, now: datetime) -> bool:
         """
@@ -124,7 +160,7 @@ class Job:
         if event == self.last_event:
             raise RuntimeError("Job.run() called but job already ran for this token")
 
-        result = self.run_func()
+        result = run_sync(self, event=event)
         self.last_event = event
         return result
 
