@@ -30,7 +30,7 @@ Most Python schedulers either require a background thread / daemon or force you 
 - **Automatic deduplication** — calling `run_pending()` multiple times within the same time bucket is safe; jobs run at most once per bucket. See [`deduplication` doc](https://schedium.readthedocs.io/en/latest/concepts/trigger_tokens.html#trigger-tokens-deduplication)
 - **Zero dependencies** — pure Python, nothing outside the standard library.
 - **Fully typed** — first-class type annotations and mypy-checked.
-- **Supports all currently maintained Python versions**: 3.10, 3.11, 3.12, 3.13, and 3.14.
+- **Supports all currently maintained Python versions**: 3.11, 3.12, 3.13, 3.14 and 3.15.
 
 [link to the documentation](https://schedium.readthedocs.io)
 
