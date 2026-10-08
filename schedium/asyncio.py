@@ -17,15 +17,24 @@ the scheduler) -- see :doc:`/usage/asyncio`.
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import inspect
 import logging
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterable
 from datetime import datetime
 from functools import partial
 from typing import Literal, cast, overload
 
 from schedium.exceptions import SyncJobNotAllowed
 from schedium.job import Job
+from schedium.plugins._runner import (
+    PluginHost,
+    notify,
+    notify_async,
+    overrides_run_func,
+    run_async,
+)
+from schedium.plugins.base import Plugin
 from schedium.scheduler import JobDidNotRun, JobDidNotRunType
 from schedium.triggers.base import TriggerEvent
 from schedium.types.cancel_job import CancelJob
@@ -76,7 +85,8 @@ async def _run_job_func(
     await_awaitable_results: bool,
     require_async_jobs: bool = False,
 ) -> object:
-    awaitable = _extract_awaitable(job.func)
+    func = job.run_func if overrides_run_func(job) else job.func
+    awaitable = _extract_awaitable(func)
     if awaitable is not None:
         return await awaitable
 
@@ -84,7 +94,10 @@ async def _run_job_func(
         raise SyncJobNotAllowed(job)
 
     loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(None, job.func)
+    # run in a copy of the current context so that contextvars (in particular the
+    # one tracking the current plugin run) are visible from the worker thread
+    ctx = contextvars.copy_context()
+    result = await loop.run_in_executor(None, ctx.run, func)
     if await_awaitable_results and inspect.isawaitable(result):
         return await result
     return result
@@ -135,10 +148,10 @@ def _on_task_done(
         return
 
     if isinstance(result, CancelJob):
-        _scheduler.remove_job_if_present(_job)
+        _scheduler.remove_job_if_present(_job, result.reason)
 
 
-class AsyncScheduler:
+class AsyncScheduler(PluginHost):
     """
     Async-native scheduler: evaluate triggers and run due jobs on the event loop.
 
@@ -182,6 +195,9 @@ class AsyncScheduler:
         cover jobs added straight to :attr:`jobs` or whose ``func`` was changed
         afterwards. ``await_awaitable_results`` then has no effect, since no
         synchronous job is ever called.
+    plugins : Iterable[Plugin], default ()
+        Plugins that apply to every job of this scheduler. See
+        :class:`~schedium.plugins.Plugin`.
 
     Notes
     -----
@@ -208,6 +224,11 @@ class AsyncScheduler:
     CancelJob handling
         If a job returns :class:`~schedium.types.cancel_job.CancelJob`, the job is
         removed from the scheduler.
+
+    Plugins
+        Hooks of plugins marked ``blocking`` run in a worker thread so they cannot
+        stall the event loop, and ``wrap_run_async`` (not ``wrap_run``) surrounds
+        each job. See :doc:`/plugins/developers`.
 
     Background loop
         :meth:`start` runs the scheduler loop as a task on the running event loop,
@@ -252,8 +273,10 @@ class AsyncScheduler:
         revert_last_event_on_failure: bool = False,
         await_awaitable_results: bool = False,
         require_async_jobs: bool = False,
+        plugins: Iterable[Plugin] = (),
     ) -> None:
         self.jobs: list[Job] = []
+        self._init_plugins(list(plugins))
 
         self.max_concurrency = max_concurrency
         self.revert_last_event_on_failure = revert_last_event_on_failure
@@ -293,11 +316,12 @@ class AsyncScheduler:
                 awaitable.close()
 
         self.jobs.append(job)
+        notify(self._effective_plugins(), "on_job_added", self, job)
 
     def __getitem__(self, item: int) -> Job:
         return self.jobs[item]
 
-    def remove_job_if_present(self, job: Job) -> None:
+    def remove_job_if_present(self, job: Job, reason: str | None = None) -> None:
         """
         Remove a job from the scheduler if it is still present.
 
@@ -305,11 +329,14 @@ class AsyncScheduler:
         ----------
         job : Job
             The job to remove. If the job is not present, this method does nothing.
+        reason : str, optional
+            Why the job is removed, reported to plugins (``on_job_removed``).
         """
         try:
             self.jobs.remove(job)
         except ValueError:
             return
+        notify(self._effective_plugins(), "on_job_removed", self, job, reason)
 
     def maybe_revert_last_event(
         self,
@@ -342,18 +369,25 @@ class AsyncScheduler:
         if job.last_event == claimed_event:
             job.last_event = previous_event
 
-    async def _execute(self, job: Job) -> object:
+    async def _execute(self, job: Job, event: TriggerEvent | None = None) -> object:
         if self._semaphore is None:
-            return await self._run(job)
+            return await self._run(job, event)
 
         async with self._semaphore:
-            return await self._run(job)
+            return await self._run(job, event)
 
-    async def _run(self, job: Job) -> object:
-        return await _run_job_func(
+    async def _run(self, job: Job, event: TriggerEvent | None = None) -> object:
+        return await run_async(
             job,
-            await_awaitable_results=self.await_awaitable_results,
-            require_async_jobs=self.require_async_jobs,
+            partial(
+                _run_job_func,
+                job,
+                await_awaitable_results=self.await_awaitable_results,
+                require_async_jobs=self.require_async_jobs,
+            ),
+            scheduler=self,
+            plugins=self._effective_plugins(),
+            event=event,
         )
 
     @overload
@@ -415,7 +449,9 @@ class AsyncScheduler:
                 pending.append(JobDidNotRun)
                 continue
 
-            task: asyncio.Task[object] = asyncio.ensure_future(self._execute(job))
+            task: asyncio.Task[object] = asyncio.ensure_future(
+                self._execute(job, event)
+            )
             tasks_to_job[task] = (job, event, prev_event)
 
             if not wait:
@@ -462,7 +498,7 @@ class AsyncScheduler:
 
             results.append(result)
             if isinstance(result, CancelJob):
-                self.remove_job_if_present(job)
+                self.remove_job_if_present(job, result.reason)
 
         return results
 
@@ -504,6 +540,7 @@ class AsyncScheduler:
         self._loop_task = loop.create_task(
             self._run_loop(interval), name="schedium-scheduler"
         )
+        notify(self._effective_plugins(), "on_scheduler_start", self)
 
     async def stop(self, timeout: float | None = None) -> None:
         """
@@ -520,20 +557,23 @@ class AsyncScheduler:
             Seconds to wait for running jobs before cancelling them. If None, wait
             for them for as long as it takes.
         """
-        loop_task, self._loop_task = self._loop_task, None
-        if loop_task is not None:
-            loop_task.cancel()
-            await asyncio.gather(loop_task, return_exceptions=True)
+        try:
+            loop_task, self._loop_task = self._loop_task, None
+            if loop_task is not None:
+                loop_task.cancel()
+                await asyncio.gather(loop_task, return_exceptions=True)
 
-        running = set(self._background_tasks)
-        if not running:
-            return
+            running = set(self._background_tasks)
+            if not running:
+                return
 
-        _, unfinished = await asyncio.wait(running, timeout=timeout)
-        for task in unfinished:
-            task.cancel()
-        if unfinished:
-            await asyncio.gather(*unfinished, return_exceptions=True)
+            _, unfinished = await asyncio.wait(running, timeout=timeout)
+            for task in unfinished:
+                task.cancel()
+            if unfinished:
+                await asyncio.gather(*unfinished, return_exceptions=True)
+        finally:
+            await notify_async(self._effective_plugins(), "on_scheduler_stop", self)
 
     async def __aenter__(self) -> AsyncScheduler:
         self.start()

@@ -57,10 +57,14 @@ test = [
   "pytest-mock",
 ]
 
+[tool.setuptools.packages.find]
+include = ["schedium*"]
+
 [tool.setuptools.dynamic]
 version = {attr = "schedium.__version__"}
 
 [tool.pytest.ini_options]
+testpaths = ["tests"]
 pythonpath = ["."]
 asyncio_mode = "auto"
 

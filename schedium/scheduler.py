@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable
 from datetime import datetime
 
 from schedium.job import Job
+from schedium.plugins._runner import PluginHost, notify, run_sync
+from schedium.plugins.base import Plugin
 from schedium.types.cancel_job import CancelJob
 from schedium.utils.evaluate import evaluate
 from schedium.utils.time_of_next_run import time_of_next_run as _time_of_next_run
@@ -18,7 +21,7 @@ JobDidNotRun = JobDidNotRunType()
 """Sentinel value used by Scheduler.run_pending to indicate a job was not due"""
 
 
-class Scheduler:
+class Scheduler(PluginHost):
     """
     Simple in-process scheduler.
 
@@ -29,6 +32,12 @@ class Scheduler:
     - Deduplication is handled per-job: if you call :meth:`run_pending` multiple
       times within the same trigger "token" (e.g., the same minute bucket), the
       job runs only once.
+
+    Parameters
+    ----------
+    plugins : Iterable[Plugin], default ()
+        Plugins that apply to every job of this scheduler. See
+        :class:`~schedium.plugins.Plugin`.
 
     Notes
     -----
@@ -85,8 +94,9 @@ class Scheduler:
     datetime.datetime(2026, 2, 3, 8, 0)
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, plugins: Iterable[Plugin] = ()) -> None:
         self.jobs: list[Job] = []
+        self._init_plugins(list(plugins))
 
     def append(self, job: Job) -> None:
         """
@@ -99,6 +109,7 @@ class Scheduler:
         """
 
         self.jobs.append(job)
+        notify(self._effective_plugins(), "on_job_added", self, job)
 
     def __getitem__(self, item: int) -> Job:
         return self.jobs[item]
@@ -134,7 +145,9 @@ class Scheduler:
                 results.append(JobDidNotRun)
                 continue
 
-            result = job.run_func()
+            result = run_sync(
+                job, scheduler=self, plugins=self._effective_plugins(), event=event
+            )
             job.last_event = event
             results.append(result)
 
@@ -144,6 +157,14 @@ class Scheduler:
                 except ValueError:
                     # Already removed by user code.
                     pass
+                else:
+                    notify(
+                        self._effective_plugins(),
+                        "on_job_removed",
+                        self,
+                        job,
+                        result.reason,
+                    )
                 logger.info(
                     "Job %r cancelled itself (reason=%r)",
                     job,

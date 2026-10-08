@@ -36,10 +36,11 @@ Examples
     run_pending()
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import overload
 
 from schedium.job import Job
+from schedium.plugins.base import Plugin
 from schedium.scheduler import Scheduler
 from schedium.triggers.base import BaseTrigger
 
@@ -56,7 +57,12 @@ def add_job(job: Job) -> None: ...
 
 @overload
 def add_job(
-    job: Callable[[], object], trigger: BaseTrigger, name: str | None = None
+    job: Callable[[], object],
+    trigger: BaseTrigger,
+    name: str | None = None,
+    *,
+    id: str | None = None,
+    plugins: Iterable[Plugin] = (),
 ) -> None: ...
 
 
@@ -64,11 +70,14 @@ def add_job(
     job: Job | Callable[[], object],
     trigger: BaseTrigger | None = None,
     name: str | None = None,
+    *,
+    id: str | None = None,
+    plugins: Iterable[Plugin] = (),
 ) -> None:
     if not isinstance(job, Job):
         if trigger is None:
             raise ValueError("trigger must be provided when job is not a Job instance")
-        job = Job(job, trigger=trigger, name=name)
+        job = Job(job, trigger=trigger, name=name, id=id, plugins=plugins)
     default_scheduler.append(job)
 
 
