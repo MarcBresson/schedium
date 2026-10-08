@@ -30,7 +30,7 @@ Pre-commit hooks
 
    pre-commit run --all-files
 
-This repository runs ``ruff``, ``ruff-format``, ``pyupgrade`` (targeting Python 3.10+),
+This repository runs ``ruff``, ``ruff-format``, ``pyupgrade`` (targeting Python 3.11+),
 ``mypy``, and ``numpydoc-validation`` on every commit. Public docstrings follow the
 `numpydoc <https://numpydoc.readthedocs.io/>`_ style, as that is what the API reference is
 generated from.
@@ -55,7 +55,7 @@ requests and on pushes to ``main``, and only when files they care about changed.
 run when a ``v*`` tag is pushed.
 
 **Tests** (``tests.yml``)
-   Runs ``pytest`` on Python 3.10 to 3.15 (3.15 being a pre-release). Triggered by changes to
+   Runs ``pytest`` on Python 3.11 to 3.15 (3.15 being a pre-release). Triggered by changes to
    ``schedium/``, ``tests/``, ``pyproject.toml`` or the workflow itself. Python 3.14 also
    measures coverage. On pull requests from the same repository, a ``coverage report`` job
    then posts (or updates) a comment comparing coverage and test duration with the latest
