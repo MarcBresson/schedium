@@ -25,7 +25,9 @@ hooks you care about and override only those.
    scheduler = Scheduler(plugins=[Announce()])
    scheduler.append(Job(lambda: None, Every(unit="minute", interval=5), name="hello"))
 
-Plugins can also be distributed and installed as separate packages.
+Ready-made plugins are installed as separate packages. The first one,
+:doc:`schedium-history </plugins/history>`, remembers every run (when it started
+and stopped, its status, errors and logs).
 
 Attaching plugins
 -----------------
@@ -198,7 +200,7 @@ Applications opt in explicitly:
    scheduler = Scheduler(plugins=load_entry_point_plugins())
 
 Only plugins that can be created without configuration make sense as entry
-points. A plugin that needs settings, like the storage plugin that needs to know
+points. A plugin that needs settings, like the history plugin that needs to know
 where to save, is created by the application and passed explicitly.
 
 .. note::

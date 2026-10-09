@@ -10,6 +10,10 @@ DOCS_DIR = os.path.dirname(__file__)
 PROJECT_ROOT = os.path.abspath(os.path.join(DOCS_DIR, ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
+# Plugins live in this repository as separate packages: import them from source.
+HISTORY_ROOT = os.path.join(PROJECT_ROOT, "plugins", "history")
+if HISTORY_ROOT not in sys.path:
+    sys.path.insert(0, HISTORY_ROOT)
 
 html_title = "Schedium"
 project = "schedium"
@@ -88,6 +92,8 @@ def linkcode_resolve(domain, info):
     if not info["module"]:
         return None
     filename = quote(info["module"].replace(".", "/"))
+    if info["module"].split(".")[0] == "schedium_history":
+        filename = "plugins/history/" + filename
     if "fullname" in info:
         anchor = info["fullname"]
         anchor = "#:~:text=" + quote(anchor.split(".")[-1])

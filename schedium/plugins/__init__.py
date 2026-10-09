@@ -12,7 +12,7 @@ hooks you care about, and attach instances to a scheduler or a job::
 
     scheduler = Scheduler(plugins=[Announce()])
 
-Plugins distributed as their own packages (for instance ``schedium-storage``)
+Plugins distributed as their own packages (for instance ``schedium-history``)
 use this same public API.
 """
 

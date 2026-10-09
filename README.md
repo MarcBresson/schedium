@@ -126,6 +126,15 @@ class Announce(Plugin):
 sched = Scheduler(plugins=[Announce()])
 ```
 
+Ready-made plugins are separate packages. [`schedium-history`](https://github.com/MarcBresson/schedium/tree/main/plugins/history) remembers every
+run (start, stop, status, errors and logs) in memory, a JSONL file, a SQL database or your own backend:
+
+```python
+from schedium_history import JSONLStore, HistoryPlugin
+
+sched = Scheduler(plugins=[HistoryPlugin(JSONLStore("runs.jsonl"), capture_logging=True)])
+```
+
 See the [plugins documentation](https://schedium.readthedocs.io/en/latest/plugins/developers.html).
 
 ## Composing triggers

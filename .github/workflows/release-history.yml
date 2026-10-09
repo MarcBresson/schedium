@@ -1,0 +1,36 @@
+name: Release schedium-history (GitHub)
+
+on:
+  push:
+    tags:
+      - "history-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+
+      - name: Build dists
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+          python -m build plugins/history
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: schedium-history ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            plugins/history/dist/*
