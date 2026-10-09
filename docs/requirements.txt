@@ -5,3 +5,5 @@ sphinx_copybutton>=0.5.2
 sphinxext-opengraph[social_cards]>=0.13.0
 sphinx-toolbox==4.1.2
 sphinx-github-changelog>=2.3.0
+# For autodoc in schedium_history.SQLAlchemyStore
+sqlalchemy>=2.1

@@ -1,0 +1,92 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "schedium-history"
+dynamic = ["version"]
+description = "Run traces for schedium: remember when jobs started and stopped, their status, logs and errors."
+readme = "README.md"
+requires-python = ">=3.11"
+maintainers = [
+  {name = "Marc Bresson", email = "m.bresson@mailo.eu"},
+]
+keywords = ["schedium", "scheduler", "plugin", "job history", "traces"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Typing :: Typed",
+]
+dependencies = ["schedium>=1.2.0"]
+
+[project.urls]
+Repository = "https://github.com/MarcBresson/schedium/tree/main/plugins/history"
+Issues = "https://github.com/MarcBresson/schedium"
+Documentation = "https://schedium.readthedocs.io/en/latest/plugins/history.html"
+
+[project.optional-dependencies]
+sqlalchemy = ["sqlalchemy>=2.1"]
+
+[dependency-groups]
+test = [
+    "pytest",
+    "pytest-asyncio",
+    "sqlalchemy>=2.1",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "schedium_history.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["schedium_history*"]
+
+[tool.setuptools.package-data]
+schedium_history = ["py.typed"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.numpydoc_validation]
+checks = [
+  "GL01",
+  "GL02",
+  "GL03",
+  "GL05",
+  "GL06",
+  "GL07",
+  "GL09",
+  "GL10",
+  "SS01",
+  "SS02",
+  "SS03",
+  "SS04",
+  "SS05",
+  "PR01",
+  "PR02",
+  "PR03",
+  "PR04",
+  "PR05",
+  "PR06",
+  "PR07",
+  "PR08",
+  "PR09",
+  "PR10",
+  "RT02",
+  "RT03",
+  "RT04",
+  "RT05",
+  "SA02",
+  "SA03",
+  "SA04",
+]
+
+exclude_files = [ # don't process filepaths that match these regex
+  '^(.*/)?tests/.*',
+]

@@ -74,6 +74,7 @@ Contents
    :caption: Plugins
 
    Developing plugins <plugins/developers>
+   History <plugins/history>
 
 .. toctree::
    :maxdepth: 2
@@ -93,6 +94,7 @@ Contents
    Threading <api/threading>
    Asyncio <api/asyncio>
    Plugins <api/plugins>
+   History plugin <api/history>
    Triggers <api/triggers/index>
 
 .. toctree::
