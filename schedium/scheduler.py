@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import datetime
 
 from schedium.job import Job
 from schedium.plugins._runner import PluginHost, notify, run_sync
 from schedium.plugins.base import Plugin
+from schedium.triggers.base import BaseTrigger
 from schedium.types.cancel_job import CancelJob
 from schedium.utils.evaluate import evaluate
 from schedium.utils.time_of_next_run import time_of_next_run as _time_of_next_run
@@ -110,6 +111,68 @@ class Scheduler(PluginHost):
 
         self.jobs.append(job)
         notify(self._effective_plugins(), "on_job_added", self, job)
+
+    def add_job(
+        self,
+        trigger: BaseTrigger,
+        name: str | None = None,
+        *,
+        id: str | None = None,
+        plugins: Iterable[Plugin] = (),
+    ) -> Callable[[Callable[[], object]], Callable[[], object]]:
+        """
+        Return a decorator that adds the decorated function as a job.
+
+        Use this when you prefer declaring the job next to the function it runs
+        instead of building a :class:`~schedium.job.Job` and passing it to
+        :meth:`append`.
+
+        Parameters
+        ----------
+        trigger : BaseTrigger
+            The trigger that decides when the decorated function runs.
+        name : str, default None
+            Human-readable label for the job. Falls back to the
+            ``__name__`` of the decorated function.
+        id : str, default None
+            Stable identifier for the job. Falls back to the ``__name__`` of
+            the decorated function. See :attr:`schedium.job.Job.identifier`.
+        plugins : Iterable[Plugin], default ()
+            Plugins that apply to this job only, in addition to the plugins of
+            this scheduler. See :class:`~schedium.plugins.Plugin`.
+
+        Returns
+        -------
+        Callable
+            A decorator that registers the decorated function and returns it
+            unchanged, so the function can still be called normally and stacked
+            with other decorators.
+
+        Examples
+        --------
+        >>> from schedium import Every, Scheduler
+        >>> sched = Scheduler()
+        >>> @sched.add_job(Every(unit="minute", interval=5))
+        ... def tick():
+        ...     print("tick")
+        >>> sched.jobs[0].name
+        'tick'
+        >>> tick()
+        tick
+        """
+
+        def decorator(func: Callable[[], object]) -> Callable[[], object]:
+            job = Job(
+                func,
+                trigger,
+                name if name is not None else func.__name__,
+                id=id if id is not None else func.__name__,
+                plugins=plugins,
+            )
+            self.append(job)
+            return func
+
+        return decorator
 
     def __getitem__(self, item: int) -> Job:
         return self.jobs[item]
