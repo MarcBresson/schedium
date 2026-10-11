@@ -1,19 +1,8 @@
 from __future__ import annotations
 
 import os
-import sys
 from datetime import date
 from urllib.parse import quote
-
-# Ensure the project root is importable when building docs.
-DOCS_DIR = os.path.dirname(__file__)
-PROJECT_ROOT = os.path.abspath(os.path.join(DOCS_DIR, ".."))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
-# Plugins live in this repository as separate packages: import them from source.
-HISTORY_ROOT = os.path.join(PROJECT_ROOT, "plugins", "history")
-if HISTORY_ROOT not in sys.path:
-    sys.path.insert(0, HISTORY_ROOT)
 
 html_title = "Schedium"
 project = "schedium"
