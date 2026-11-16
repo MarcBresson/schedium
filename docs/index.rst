@@ -57,6 +57,16 @@ You can also use the default scheduler for quick tasks:
       run_pending()
       time.sleep(1)
 
+Or the quickest way — a decorator on any scheduler, including the default one:
+
+.. code-block:: python
+
+   from schedium import default_scheduler, Every
+
+   @default_scheduler.add_job(Every(unit="minute", interval=5), name="hello")
+   def hello():
+      print("hello")
+
 Contents
 --------
 

@@ -62,6 +62,29 @@ while True:
     time.sleep(1)
 ```
 
+Or, the quickest way — register jobs with a decorator:
+
+```python
+from schedium import Every, Scheduler
+
+sched = Scheduler()
+
+@sched.add_job(Every(unit="minute", interval=5), name="5-min")
+def hello():
+    print("hello!")
+```
+
+The decorator works the same way on every scheduler type, including
+`default_scheduler`:
+
+```python
+from schedium import default_scheduler, Every
+
+@default_scheduler.add_job(Every(unit="minute", interval=5), name="5-min")
+def hello():
+    print("hello!")
+```
+
 ## Threading (optional)
 
 schedium runs jobs inline by default. If you want multi-threading, use the helpers in
