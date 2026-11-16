@@ -9,15 +9,18 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime
 from functools import partial
-from typing import Literal, overload
+from typing import Literal, TypeVar, overload
 
+from schedium.decorator import job_decorator
 from schedium.job import Job
 from schedium.plugins._runner import PluginHost, notify, run_sync
 from schedium.plugins.base import Plugin
 from schedium.scheduler import JobDidNotRun, JobDidNotRunType, Scheduler
-from schedium.triggers.base import TriggerEvent
+from schedium.triggers.base import BaseTrigger, TriggerEvent
 from schedium.types.cancel_job import CancelJob
 from schedium.utils.evaluate import evaluate
+
+_F = TypeVar("_F", bound=Callable[[], object])
 
 logger = logging.getLogger(__name__)
 
@@ -140,6 +143,36 @@ class ThreadedJobsScheduler(_WrappingPluginHost):
         with self._lock:
             self.scheduler.jobs.append(job)
         notify(self._effective_plugins(), "on_job_added", self, job)
+
+    def add_job(
+        self,
+        trigger: BaseTrigger,
+        name: str | None = None,
+        *,
+        job_id: str | None = None,
+        plugins: Iterable[Plugin] = (),
+    ) -> Callable[[_F], _F]:
+        """
+        Register a job with a decorator.
+
+        Parameters
+        ----------
+        trigger : BaseTrigger
+            When the job runs.
+        name : str, default None
+            Human-readable label. Defaults to the function name.
+        job_id : str, default None
+            Stable identifier used by history plugins. Defaults to the function name.
+        plugins : Iterable[Plugin], default ()
+            Plugins applied to this job only.
+
+        Returns
+        -------
+        Callable[[F], F]
+            A decorator that returns the function unchanged.
+        """
+
+        return job_decorator(self, trigger, name, job_id=job_id, plugins=plugins)
 
     @property
     def jobs(self) -> list[Job]:
@@ -407,6 +440,36 @@ class QueuedJobsScheduler(_WrappingPluginHost):
         with self._lock:
             self.scheduler.jobs.append(job)
         notify(self._effective_plugins(), "on_job_added", self, job)
+
+    def add_job(
+        self,
+        trigger: BaseTrigger,
+        name: str | None = None,
+        *,
+        job_id: str | None = None,
+        plugins: Iterable[Plugin] = (),
+    ) -> Callable[[_F], _F]:
+        """
+        Register a job with a decorator.
+
+        Parameters
+        ----------
+        trigger : BaseTrigger
+            When the job runs.
+        name : str, default None
+            Human-readable label. Defaults to the function name.
+        job_id : str, default None
+            Stable identifier used by history plugins. Defaults to the function name.
+        plugins : Iterable[Plugin], default ()
+            Plugins applied to this job only.
+
+        Returns
+        -------
+        Callable[[F], F]
+            A decorator that returns the function unchanged.
+        """
+
+        return job_decorator(self, trigger, name, job_id=job_id, plugins=plugins)
 
     @property
     def jobs(self) -> list[Job]:
